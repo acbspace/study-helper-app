@@ -137,6 +137,24 @@ class Device(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (UniqueConstraint("user_id", "device_hash", name="uq_devices_user_hash"),)
 
 
+class PasswordResetToken(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    """Single-use password-reset tokens, stored only as a hash.
+
+    The clear token exists just long enough to be emailed. Storing only its SHA-256 means a
+    database read cannot be turned into account takeover, and `used_at` makes a replayed
+    link fail even inside the validity window.
+    """
+
+    __tablename__ = "password_reset_tokens"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UuidType, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime, nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
+
+
 class RefreshToken(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     """Opaque refresh tokens stored hashed, rotated on use, with family revocation."""
 

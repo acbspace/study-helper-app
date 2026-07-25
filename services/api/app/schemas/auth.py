@@ -42,12 +42,31 @@ class LoginRequest(StrictModel):
 
 
 class RefreshRequest(StrictModel):
-    refresh_token: str = Field(min_length=1, max_length=512)
+    # Optional because browser clients send the token as an httpOnly cookie instead, so it
+    # is never readable from JavaScript. Native clients keep sending it in the body.
+    refresh_token: str | None = Field(default=None, min_length=1, max_length=512)
+
+
+class ChangePasswordRequest(StrictModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: Password
+
+
+class ForgotPasswordRequest(StrictModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(StrictModel):
+    token: str = Field(min_length=1, max_length=512)
+    new_password: Password
 
 
 class TokenResponse(ResponseModel):
     access_token: str
-    refresh_token: str
+    # Null when the caller asked for the cookie transport: the refresh token was set as an
+    # httpOnly cookie instead, so returning it here too would hand it straight back to
+    # JavaScript and undo the point of the cookie.
+    refresh_token: str | None = None
     token_type: str = "Bearer"
     expires_in: int
 

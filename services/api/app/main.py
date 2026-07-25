@@ -13,8 +13,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.api.middleware import RequestContextMiddleware
+from app.api.middleware import (
+    MaxBodySizeMiddleware,
+    RequestContextMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.api.v1 import api_router
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError, ErrorCode
@@ -97,16 +102,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # the app always behaves according to the settings it was constructed with.
     app.state.settings = settings
 
+    # Middleware runs outermost-first in reverse registration order, so this reads bottom-up:
+    # host check, then body ceiling, then CORS, then headers, then correlation. A rejected
+    # Host or an oversized body is therefore turned away before anything else does work.
     app.add_middleware(RequestContextMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware, settings=settings)
     if settings.cors_origins:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=settings.cors_origins,
+            # Required for the browser client's httpOnly refresh cookie to be sent at all.
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
             expose_headers=["X-Request-ID"],
         )
+    app.add_middleware(MaxBodySizeMiddleware, max_bytes=settings.max_request_bytes)
+    if settings.allowed_hosts:
+        # Blocks Host-header poisoning, which turns any absolute URL the app generates
+        # (password-reset links above all) into a link to the attacker's domain.
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
 
     _register_exception_handlers(app)
     app.include_router(api_router, prefix=API_V1_PREFIX)

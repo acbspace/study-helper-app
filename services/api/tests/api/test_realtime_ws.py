@@ -93,7 +93,7 @@ async def _register(http: AsyncClient, *, email: str, username: str) -> tuple[st
         "/auth/register",
         json={
             "email": email,
-            "password": "password123",
+            "password": "test-passphrase-9x",
             "username": username,
             "display_name": username.title(),
         },

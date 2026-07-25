@@ -54,7 +54,14 @@ from app.models.social import (
     StudyGroup,
 )
 from app.models.study import StudyGoal, StudySession, StudySessionEvent, Subject
-from app.models.user import Device, RefreshToken, User, UserProfile, UserSettings
+from app.models.user import (
+    Device,
+    PasswordResetToken,
+    RefreshToken,
+    User,
+    UserProfile,
+    UserSettings,
+)
 
 __all__ = [
     "ActorType",
@@ -90,6 +97,7 @@ __all__ = [
     "MissionMetric",
     "Notification",
     "NotificationKind",
+    "PasswordResetToken",
     "RefreshToken",
     "Report",
     "ReportStatus",

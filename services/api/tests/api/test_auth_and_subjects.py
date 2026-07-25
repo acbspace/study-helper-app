@@ -86,7 +86,7 @@ class TestRegistration:
 class TestLogin:
     async def test_valid_credentials_return_tokens(self, client: AsyncClient, user: User) -> None:
         response = await client.post(
-            "/auth/login", json={"email": user.email, "password": "password123"}
+            "/auth/login", json={"email": user.email, "password": "test-passphrase-9x"}
         )
         assert response.status_code == 200
         assert response.json()["tokens"]["token_type"] == "Bearer"
@@ -103,7 +103,7 @@ class TestLogin:
     ) -> None:
         """Different messages would let an attacker enumerate registered accounts."""
         unknown = await client.post(
-            "/auth/login", json={"email": "nobody@example.com", "password": "password123"}
+            "/auth/login", json={"email": "nobody@example.com", "password": "test-passphrase-9x"}
         )
         wrong = await client.post(
             "/auth/login", json={"email": user.email, "password": "wrongpassword"}
@@ -115,7 +115,7 @@ class TestLogin:
 class TestTokens:
     async def test_refresh_rotates_the_token(self, client: AsyncClient, user: User) -> None:
         login = await client.post(
-            "/auth/login", json={"email": user.email, "password": "password123"}
+            "/auth/login", json={"email": user.email, "password": "test-passphrase-9x"}
         )
         original = login.json()["tokens"]["refresh_token"]
 
@@ -128,7 +128,7 @@ class TestTokens:
     ) -> None:
         """Token reuse means it leaked; the whole family dies."""
         login = await client.post(
-            "/auth/login", json={"email": user.email, "password": "password123"}
+            "/auth/login", json={"email": user.email, "password": "test-passphrase-9x"}
         )
         original = login.json()["tokens"]["refresh_token"]
         rotated = (await client.post("/auth/refresh", json={"refresh_token": original})).json()[
@@ -155,7 +155,7 @@ class TestTokens:
 
     async def test_logout_revokes_the_refresh_token(self, client: AsyncClient, user: User) -> None:
         login = await client.post(
-            "/auth/login", json={"email": user.email, "password": "password123"}
+            "/auth/login", json={"email": user.email, "password": "test-passphrase-9x"}
         )
         token = login.json()["tokens"]["refresh_token"]
         assert (await client.post("/auth/logout", json={"refresh_token": token})).status_code == 204

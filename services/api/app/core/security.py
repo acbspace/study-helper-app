@@ -135,6 +135,15 @@ def hash_refresh_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def generate_reset_token() -> str:
+    """Opaque password-reset token. Travels by email once; only its hash is stored."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def hash_device_identifier(settings: Settings, raw_device_id: str) -> str:
     """Salted hash of a client installation id — raw vendor ids are never persisted."""
     return hmac.new(

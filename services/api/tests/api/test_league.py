@@ -56,7 +56,7 @@ async def _register(
         "/auth/register",
         json={
             "email": email,
-            "password": "password123",
+            "password": "test-passphrase-9x",
             "username": username,
             "display_name": username.title(),
         },

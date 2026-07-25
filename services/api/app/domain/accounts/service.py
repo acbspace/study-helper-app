@@ -22,12 +22,14 @@ from app.core.errors import AppError, ConflictError, ErrorCode
 from app.core.security import (
     create_access_token,
     generate_refresh_token,
+    generate_reset_token,
     hash_password,
     hash_refresh_token,
+    hash_reset_token,
     verify_password,
 )
 from app.models.enums import AuthProvider
-from app.models.user import RefreshToken, User, UserProfile, UserSettings
+from app.models.user import PasswordResetToken, RefreshToken, User, UserProfile, UserSettings
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +87,7 @@ class AccountService:
         normalized_email = email.strip().lower()
         normalized_username = username.strip()
 
+        _reject_weak_password(password, email=normalized_email, username=normalized_username)
         if await self._find_by_email(normalized_email) is not None:
             raise ConflictError(
                 ErrorCode.EMAIL_ALREADY_REGISTERED, "That email is already registered."
@@ -219,6 +222,123 @@ class AccountService:
         for token in result.scalars().all():
             token.revoked_at = now
 
+    async def _revoke_all_sessions(self, user_id: uuid.UUID, *, now: datetime) -> None:
+        """Revoke every live refresh token for a user, across all devices."""
+        result = await self._db.execute(
+            select(RefreshToken).where(
+                RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None)
+            )
+        )
+        for token in result.scalars().all():
+            token.revoked_at = now
+
+    # ------------------------------------------------------------------ passwords
+
+    async def change_password(
+        self, *, user: User, current_password: str, new_password: str, now: datetime
+    ) -> TokenPair:
+        """Change a password, then re-issue exactly one session.
+
+        Every other session is revoked: the common reason to change a password is that
+        someone else may have it, and a change that leaves their session alive does not
+        actually take the account back.
+        """
+        invalid = AppError(
+            ErrorCode.INVALID_CREDENTIALS, "Your current password is incorrect.", status_code=401
+        )
+        if user.password_hash is None or not verify_password(current_password, user.password_hash):
+            raise invalid
+        _reject_weak_password(new_password, email=user.email, username=user.profile.username)
+
+        moment = ensure_utc(now)
+        user.password_hash = hash_password(new_password)
+        await self._revoke_all_sessions(user.id, now=moment)
+        await self._db.commit()
+        return await self.issue_tokens(user, now=moment)
+
+    async def request_password_reset(self, *, email: str, now: datetime) -> tuple[str, str] | None:
+        """Mint a reset token, or return None when the email has no active account.
+
+        The caller must respond identically either way — whether an address is registered is
+        exactly the fact an enumeration attack is after.
+        """
+        user = await self._find_by_email(email)
+        if user is None or not user.is_active or user.auth_provider != AuthProvider.EMAIL.value:
+            return None
+
+        moment = ensure_utc(now)
+        # Supersede any outstanding request: two live links double the window of exposure
+        # for no benefit, and the newest is the one the user is looking at.
+        outstanding = await self._db.execute(
+            select(PasswordResetToken).where(
+                PasswordResetToken.user_id == user.id, PasswordResetToken.used_at.is_(None)
+            )
+        )
+        for row in outstanding.scalars().all():
+            row.used_at = moment
+
+        raw_token = generate_reset_token()
+        self._db.add(
+            PasswordResetToken(
+                user_id=user.id,
+                token_hash=hash_reset_token(raw_token),
+                expires_at=moment + timedelta(minutes=self._settings.password_reset_ttl_minutes),
+            )
+        )
+        await self._db.commit()
+        return user.email, raw_token
+
+    async def reset_password(self, *, token: str, new_password: str, now: datetime) -> None:
+        """Consume a reset token and set a new password, ending every existing session."""
+        invalid = AppError(
+            ErrorCode.INVALID_RESET_TOKEN,
+            "This reset link is invalid or has expired. Please request a new one.",
+            status_code=400,
+        )
+        result = await self._db.execute(
+            select(PasswordResetToken).where(
+                PasswordResetToken.token_hash == hash_reset_token(token)
+            )
+        )
+        record = result.scalar_one_or_none()
+        moment = ensure_utc(now)
+        if record is None or record.used_at is not None:
+            raise invalid
+        if ensure_utc(record.expires_at) <= moment:
+            raise invalid
+
+        user = await self.get_user(record.user_id)
+        if user is None or not user.is_active:
+            raise invalid
+        _reject_weak_password(new_password, email=user.email, username=user.profile.username)
+
+        record.used_at = moment
+        user.password_hash = hash_password(new_password)
+        # A reset is a recovery action; anything already signed in is suspect by definition.
+        await self._revoke_all_sessions(user.id, now=moment)
+        await self._db.commit()
+
+    # ------------------------------------------------------------------ deletion
+
+    async def delete_account(self, *, user: User, now: datetime) -> None:
+        """Soft-delete: sign every device out and release the identifiers immediately.
+
+        The row stays so that content the user touched keeps its foreign keys and the audit
+        trail stays readable; a worker purges it after the grace period. Email and username
+        are scrambled now rather than at purge time, so someone who deletes an account can
+        re-register with the same address today instead of waiting out the retention window.
+        """
+        moment = ensure_utc(now)
+        user.deleted_at = moment
+        user.is_active = False
+        user.email = f"deleted+{user.id.hex}@invalid"
+        user.profile.username = f"deleted_{user.id.hex[:16]}"
+        user.profile.display_name = "Deleted account"
+        user.profile.bio = None
+        user.profile.avatar_url = None
+        await self._revoke_all_sessions(user.id, now=moment)
+        await self._db.commit()
+
     # ------------------------------------------------------------------ profile
 
     async def update_profile(
@@ -281,3 +401,51 @@ class AccountService:
         await self._db.commit()
         await self._db.refresh(user, attribute_names=["profile", "settings"])
         return user
+
+
+# A short denylist of the passwords that actually show up in credential-stuffing lists at
+# this length. Not a substitute for a breach-corpus check (that belongs behind a service
+# call), but it costs nothing and stops the worst of what users type first.
+_COMMON_PASSWORDS = frozenset(
+    {
+        "password",
+        "password1",
+        "password123",
+        "12345678",
+        "123456789",
+        "1234567890",
+        "qwertyuiop",
+        "iloveyou",
+        "princess",
+        "sunshine",
+        "football",
+        "baseball",
+        "welcome1",
+        "abc12345",
+        "letmein1",
+        "admin123",
+        "studyleague",
+    }
+)
+
+
+def _reject_weak_password(password: str, *, email: str, username: str) -> None:
+    """Reject passwords that are trivially guessable *for this account*.
+
+    Length is already enforced by the schema. What that cannot see is the relationship
+    between the password and the identity it protects — reusing your own username or the
+    local part of your email is the failure mode a length rule misses entirely.
+    """
+    normalized = password.strip().lower()
+    if normalized in _COMMON_PASSWORDS:
+        raise AppError(
+            ErrorCode.PASSWORD_TOO_WEAK,
+            "That password is too common. Please choose a different one.",
+        )
+
+    local_part = email.split("@", 1)[0].lower()
+    if normalized and normalized in (local_part, username.lower()):
+        raise AppError(
+            ErrorCode.PASSWORD_TOO_WEAK,
+            "Your password must be different from your username and email.",
+        )

@@ -19,6 +19,8 @@ class ErrorCode(StrEnum):
 
     EMAIL_ALREADY_REGISTERED = "email_already_registered"
     USERNAME_TAKEN = "username_taken"
+    INVALID_RESET_TOKEN = "invalid_reset_token"
+    PASSWORD_TOO_WEAK = "password_too_weak"
 
     SUBJECT_NOT_FOUND = "subject_not_found"
     SUBJECT_NAME_TAKEN = "subject_name_taken"

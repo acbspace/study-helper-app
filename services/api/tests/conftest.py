@@ -93,7 +93,7 @@ async def user(db: AsyncSession) -> User:
 
     record = User(
         email="student@example.com",
-        password_hash=hash_password("password123"),
+        password_hash=hash_password("test-passphrase-9x"),
         auth_provider="email",
     )
     record.profile = UserProfile(
@@ -118,7 +118,7 @@ async def other_user(db: AsyncSession) -> User:
 
     record = User(
         email="rival@example.com",
-        password_hash=hash_password("password123"),
+        password_hash=hash_password("test-passphrase-9x"),
         auth_provider="email",
     )
     record.profile = UserProfile(
@@ -157,7 +157,7 @@ def sessions_service(db: AsyncSession) -> StudySessionService:
 @pytest_asyncio.fixture
 async def auth_headers(client: AsyncClient, user: User) -> dict[str, str]:
     response = await client.post(
-        "/auth/login", json={"email": user.email, "password": "password123"}
+        "/auth/login", json={"email": user.email, "password": "test-passphrase-9x"}
     )
     assert response.status_code == 200, response.text
     token = response.json()["tokens"]["access_token"]
@@ -167,7 +167,7 @@ async def auth_headers(client: AsyncClient, user: User) -> dict[str, str]:
 @pytest_asyncio.fixture
 async def other_auth_headers(client: AsyncClient, other_user: User) -> dict[str, str]:
     response = await client.post(
-        "/auth/login", json={"email": other_user.email, "password": "password123"}
+        "/auth/login", json={"email": other_user.email, "password": "test-passphrase-9x"}
     )
     assert response.status_code == 200, response.text
     token = response.json()["tokens"]["access_token"]

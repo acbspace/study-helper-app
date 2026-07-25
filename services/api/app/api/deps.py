@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.errors import AppError, ErrorCode
 from app.core.security import decode_access_token, hash_device_identifier
+from app.domain.accounts.email import EmailSender, build_email_sender
 from app.domain.accounts.service import AccountService
 from app.domain.community.service import CommunityService
 from app.domain.goals.service import GoalService
@@ -63,6 +64,13 @@ DbDep = Annotated[AsyncSession, Depends(get_db)]
 
 def get_account_service(db: DbDep, settings: SettingsDep) -> AccountService:
     return AccountService(db, settings)
+
+
+def get_email_sender(settings: SettingsDep) -> EmailSender:
+    return build_email_sender(settings)
+
+
+EmailSenderDep = Annotated[EmailSender, Depends(get_email_sender)]
 
 
 def get_subject_service(db: DbDep) -> SubjectService:
