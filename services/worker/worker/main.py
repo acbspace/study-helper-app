@@ -13,7 +13,7 @@ from app.db.session import create_engine, create_session_factory
 from arq import cron
 from arq.connections import RedisSettings
 
-from worker.jobs import league_scorer, push_notifier, session_reaper
+from worker.jobs import account_purger, league_scorer, push_notifier, session_reaper
 
 logger = get_logger(__name__)
 
@@ -47,6 +47,7 @@ class WorkerSettings:
         session_reaper.run,
         league_scorer.run,
         push_notifier.run,
+        account_purger.run,
     ]
     cron_jobs: ClassVar[list[Any]] = [
         # Runs a few minutes past each hour: fast enough that a forgotten timer never
@@ -58,6 +59,9 @@ class WorkerSettings:
         # Every two minutes: a notification is only useful while it is fresh, and the run is
         # a no-op when nothing is pending.
         cron(push_notifier.run, second={0}, minute=set(range(0, 60, 2)), run_at_startup=False),
+        # Daily, off-peak. Deletion is measured in days, so running it more often would only
+        # scan the same rows; a purge that slips by an hour breaks nothing.
+        cron(account_purger.run, hour={3}, minute={30}, run_at_startup=False),
     ]
     on_startup = startup
     on_shutdown = shutdown
