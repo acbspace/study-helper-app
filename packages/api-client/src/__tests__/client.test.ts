@@ -21,7 +21,7 @@ function memoryTokenStore(initial?: {
     async getRefreshToken() {
       return store.refresh;
     },
-    async setTokens(tokens: { access_token: string; refresh_token: string }) {
+    async setTokens(tokens: { access_token: string; refresh_token: string | null }) {
       store.access = tokens.access_token;
       store.refresh = tokens.refresh_token;
     },
@@ -144,6 +144,77 @@ describe('ApiClient', () => {
     await client.syncSessions([], 'key-123');
 
     expect(headersOfCall(fetchImpl, 0)).toMatchObject({ 'Idempotency-Key': 'key-123' });
+  });
+
+  it('refreshes from the cookie when it holds no refresh token', async () => {
+    // The browser transport: the token is in an httpOnly cookie this code cannot read, so
+    // an empty store must not be mistaken for "signed out".
+    const tokens = memoryTokenStore({ access: 'expired' });
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(401, { error: { code: 'token_expired' } }))
+      .mockResolvedValueOnce(jsonResponse(200, { access_token: 'fresh', refresh_token: null }))
+      .mockResolvedValueOnce(jsonResponse(200, { id: 'u1' }));
+    const client = new ApiClient({
+      baseUrl: 'http://api/api/v1',
+      tokens,
+      fetchImpl,
+      refreshTransport: 'cookie',
+    });
+
+    await client.getMe();
+
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    const refreshCall = requestOfCall(fetchImpl, 1);
+    expect(refreshCall.url).toBe('http://api/api/v1/auth/refresh');
+    // No token in the body, and credentials included so the browser attaches the cookie.
+    expect(JSON.parse(String(refreshCall.init.body))).toEqual({});
+    expect(refreshCall.init.credentials).toBe('include');
+    expect(tokens.access).toBe('fresh');
+  });
+
+  it('declares the cookie transport on every request', async () => {
+    const tokens = memoryTokenStore({ access: 'a' });
+    const fetchImpl = vi.fn(async () => jsonResponse(200, { id: 'u1' }));
+    const client = new ApiClient({
+      baseUrl: 'http://api/api/v1',
+      tokens,
+      fetchImpl,
+      refreshTransport: 'cookie',
+    });
+
+    await client.getMe();
+
+    expect(headersOfCall(fetchImpl, 0)).toMatchObject({ 'X-Refresh-Transport': 'cookie' });
+  });
+
+  it('leaves body-transport clients sending the token as before', async () => {
+    const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
+    const fetchImpl = vi.fn(async () => jsonResponse(200, { id: 'u1' }));
+    const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
+
+    await client.getMe();
+
+    const headers = headersOfCall(fetchImpl, 0);
+    expect(headers['X-Refresh-Transport']).toBeUndefined();
+    expect(requestOfCall(fetchImpl, 0).init.credentials).toBeUndefined();
+  });
+
+  it('gives up when a body-transport client has no refresh token', async () => {
+    const tokens = memoryTokenStore({ access: 'expired' });
+    const onAuthFailure = vi.fn();
+    const fetchImpl = vi.fn(async () => jsonResponse(401, { error: { code: 'token_expired' } }));
+    const client = new ApiClient({
+      baseUrl: 'http://api/api/v1',
+      tokens,
+      fetchImpl,
+      onAuthFailure,
+    });
+
+    await expect(client.getMe()).rejects.toBeInstanceOf(ApiError);
+    // One call only: with nothing to refresh with, there is no point attempting it.
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(onAuthFailure).toHaveBeenCalled();
   });
 
   it('patches the profile and the settings on their own endpoints', async () => {

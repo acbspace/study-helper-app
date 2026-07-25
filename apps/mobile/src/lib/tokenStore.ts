@@ -23,7 +23,11 @@ export const secureTokenStore: TokenStore = {
 
   async setTokens(tokens: AuthTokens) {
     await SecureStore.setItemAsync(ACCESS_KEY, tokens.access_token);
-    await SecureStore.setItemAsync(REFRESH_KEY, tokens.refresh_token);
+    // Null only under the cookie transport, which native never uses; keeping the stored
+    // token rather than clearing it means a surprise null cannot silently sign the user out.
+    if (tokens.refresh_token !== null) {
+      await SecureStore.setItemAsync(REFRESH_KEY, tokens.refresh_token);
+    }
   },
 
   async clear() {

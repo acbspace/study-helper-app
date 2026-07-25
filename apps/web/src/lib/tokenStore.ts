@@ -1,49 +1,39 @@
 /**
  * Browser token storage for the API client.
  *
- * Tokens live in `localStorage` so a refresh keeps the session; the API client owns rotation.
- * The interface is async to match the shared `TokenStore` contract (native uses secure async
- * storage), even though the web reads are synchronous underneath.
+ * The access token lives in memory only and the refresh token is never held here at all —
+ * the server keeps it in an httpOnly cookie the page cannot read. `localStorage` was the
+ * obvious place for both and the wrong one: anything a page's own JavaScript can read,
+ * injected JavaScript can exfiltrate, and a 30-day refresh token read out of storage is a
+ * month of silent account access.
+ *
+ * The cost is that a reload starts with no access token. That is fine — the client refreshes
+ * against the cookie on the first 401 and the session continues, which is exactly the
+ * exchange this design is making: one extra round trip after a reload, in return for a
+ * credential XSS cannot reach.
  */
 
 import type { AuthTokens, TokenStore } from '@study-league/api-client';
 
-const ACCESS_KEY = 'sl_access_token';
-const REFRESH_KEY = 'sl_refresh_token';
-
-function read(key: string): string | null {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null; // private mode / storage disabled — treat as signed out
-  }
-}
-
-function write(key: string, value: string): void {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    // Nothing durable to do; the session simply won't survive a reload.
-  }
-}
+let accessToken: string | null = null;
 
 export const webTokenStore: TokenStore = {
   async getAccessToken(): Promise<string | null> {
-    return read(ACCESS_KEY);
+    return accessToken;
   },
   async getRefreshToken(): Promise<string | null> {
-    return read(REFRESH_KEY);
+    // Always null by design; the cookie is sent by the browser, not by this code.
+    return null;
   },
   async setTokens(tokens: AuthTokens): Promise<void> {
-    write(ACCESS_KEY, tokens.access_token);
-    write(REFRESH_KEY, tokens.refresh_token);
+    accessToken = tokens.access_token;
   },
   async clear(): Promise<void> {
-    try {
-      window.localStorage.removeItem(ACCESS_KEY);
-      window.localStorage.removeItem(REFRESH_KEY);
-    } catch {
-      // no-op
-    }
+    accessToken = null;
   },
 };
+
+/** Test seam: lets a test start from a known signed-in state. */
+export function __setAccessTokenForTests(token: string | null): void {
+  accessToken = token;
+}

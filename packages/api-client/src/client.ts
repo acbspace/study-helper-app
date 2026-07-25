@@ -59,6 +59,15 @@ export interface ApiClientOptions {
   /** Called when refreshing fails, so the app can route back to sign-in. */
   onAuthFailure?: () => void;
   fetchImpl?: typeof fetch;
+  /**
+   * How the refresh token is carried.
+   *
+   * `'body'` (default) suits a native app, which can put the token in the platform
+   * keystore. `'cookie'` asks the server to set an httpOnly cookie instead and omit the
+   * token from responses — the only way a browser can hold a long-lived credential that
+   * injected JavaScript cannot read.
+   */
+  refreshTransport?: 'body' | 'cookie';
 }
 
 interface RequestOptions {
@@ -84,6 +93,7 @@ export class ApiClient {
   private readonly deviceId?: string;
   private readonly onAuthFailure?: () => void;
   private readonly fetchImpl: typeof fetch;
+  private readonly usesCookieRefresh: boolean;
   /** Shared across concurrent 401s so a burst of requests triggers one refresh. */
   private refreshInFlight: Promise<boolean> | null = null;
 
@@ -93,6 +103,7 @@ export class ApiClient {
     this.deviceId = options.deviceId;
     this.onAuthFailure = options.onAuthFailure;
     this.fetchImpl = options.fetchImpl ?? fetch;
+    this.usesCookieRefresh = options.refreshTransport === 'cookie';
   }
 
   // ---------------------------------------------------------------- transport
@@ -131,6 +142,7 @@ export class ApiClient {
     if (options.body !== undefined) headers['Content-Type'] = 'application/json';
     if (this.deviceId) headers['X-Device-Id'] = this.deviceId;
     if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
+    if (this.usesCookieRefresh) headers['X-Refresh-Transport'] = 'cookie';
 
     if (!options.anonymous) {
       const token = await this.tokens.getAccessToken();
@@ -143,6 +155,8 @@ export class ApiClient {
         headers,
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
         signal: options.signal,
+        // Required for the httpOnly refresh cookie to be sent and accepted cross-origin.
+        credentials: this.usesCookieRefresh ? 'include' : undefined,
       });
     } catch (cause) {
       // Offline, DNS failure, timeout: surfaced as a retryable ApiError so callers can
@@ -172,11 +186,13 @@ export class ApiClient {
 
     this.refreshInFlight = (async () => {
       const refreshToken = await this.tokens.getRefreshToken();
-      if (!refreshToken) return false;
+      // Under the cookie transport the browser holds the token where this code cannot read
+      // it, so an empty store is expected rather than a reason to give up.
+      if (!refreshToken && !this.usesCookieRefresh) return false;
       try {
         const response = await this.send('/auth/refresh', {
           method: 'POST',
-          body: { refresh_token: refreshToken },
+          body: refreshToken ? { refresh_token: refreshToken } : {},
           anonymous: true,
         });
         if (!response.ok) return false;
@@ -226,17 +242,51 @@ export class ApiClient {
 
   async logout(): Promise<void> {
     const refreshToken = await this.tokens.getRefreshToken();
-    if (refreshToken) {
+    // Under the cookie transport there is nothing to send, but the call still has to happen:
+    // it is what revokes the token family server-side and clears the cookie.
+    if (refreshToken || this.usesCookieRefresh) {
       try {
         await this.request<void>('/auth/logout', {
           method: 'POST',
-          body: { refresh_token: refreshToken },
+          body: refreshToken ? { refresh_token: refreshToken } : {},
           anonymous: true,
         });
       } catch {
         // Signing out locally must succeed even if the server call does not.
       }
     }
+    await this.tokens.clear();
+  }
+
+  /** Change the password. Every other session is revoked, so new tokens come back. */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const tokens = await this.request<AuthTokens>('/auth/change-password', {
+      method: 'POST',
+      body: { current_password: currentPassword, new_password: newPassword },
+    });
+    await this.tokens.setTokens(tokens);
+  }
+
+  /** Always resolves — the server will not say whether the address has an account. */
+  requestPasswordReset(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: { email },
+      anonymous: true,
+    });
+  }
+
+  resetPassword(token: string, newPassword: string): Promise<void> {
+    return this.request<void>('/auth/reset-password', {
+      method: 'POST',
+      body: { token, new_password: newPassword },
+      anonymous: true,
+    });
+  }
+
+  /** Soft-delete this account and sign out. Purged for real after the grace period. */
+  async deleteAccount(): Promise<void> {
+    await this.request<void>('/me', { method: 'DELETE' });
     await this.tokens.clear();
   }
 

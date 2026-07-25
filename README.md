@@ -59,6 +59,12 @@ explainable ([ADR-0006](docs/decisions/ADR-0006-league-scoring-versioned.md)).
 
 ### Platform
 
+- **Account security** — password change and a single-use, hashed password-reset token, both
+  of which revoke every other session; two-phase account deletion (immediate soft-delete and
+  identifier release, hard purge after 30 days); a password policy that rejects common
+  strings and anything matching the account's own username or email. Browsers hold the
+  refresh token in an httpOnly cookie and the access token in memory only; native clients
+  keep using the keystore ([SECURITY.md](docs/architecture/SECURITY.md)).
 - **Settings** — one screen that owns everything the account runs on: profile, daily/weekly
   goals, **scheduled study days** (the days the league's consistency score is measured
   against), pomodoro lengths, time zone, the presence and subject privacy switches, blocked
@@ -234,7 +240,7 @@ Sign in with the seeded `demo@example.com` / `studyleague123`.
 
 ```bash
 cd services/api
-.venv\Scripts\pytest -q                 # 341 tests
+.venv\Scripts\pytest -q                 # 385 tests
 .venv\Scripts\pytest -q --cov=app       # …with a coverage report
 .venv\Scripts\ruff check .              # lint
 .venv\Scripts\ruff format --check .     # formatting
@@ -257,7 +263,7 @@ $env:TEST_DATABASE_URL = "postgresql+asyncpg://study:study_local_pw@localhost:54
 
 ```bash
 cd services/worker
-..\api\.venv\Scripts\pytest -q          # 16 tests
+..\api\.venv\Scripts\pytest -q          # 25 tests
 ..\api\.venv\Scripts\ruff check .       # lint
 ..\api\.venv\Scripts\mypy worker        # strict type checking
 ```
@@ -329,19 +335,19 @@ Latest local run, all green:
 
 | Check | Result |
 |---|---|
-| `pytest` (API, SQLite) | **341 passed**, 79% line coverage |
-| `pytest` (API, PostgreSQL 16) | **341 passed** |
-| `pytest` (worker) | **16 passed** |
+| `pytest` (API, SQLite) | **385 passed** |
+| `pytest` (API, PostgreSQL 16) | **385 passed** |
+| `pytest` (worker) | **25 passed** |
 | `ruff check` / `ruff format --check` (API + worker) | clean |
-| `mypy app` / `mypy worker` (strict) | clean, 99 + 6 files |
-| `scripts.openapi_snapshot --check` | contract current, 80 paths |
+| `mypy app` / `mypy worker` (strict) | clean, 100 + 7 files |
+| `scripts.openapi_snapshot --check` | contract current, 83 paths |
 | `eslint .` (all JS workspaces) | clean |
 | `prettier --check .` | clean |
 | `tsc --noEmit` (mobile + packages) | clean |
-| `jest` (mobile) | **87 passed**, 54% line coverage |
-| `vitest` (api-client transport) | **7 passed** |
+| `jest` (mobile) | **87 passed** |
+| `vitest` (api-client transport) | **11 passed** |
 | `tsc --noEmit` (web) | clean |
-| `vitest` (web) | **17 passed** |
+| `vitest` (web) | **20 passed** |
 | `vite build` (web) | bundles clean |
 | `npm run generate:api` | no diff (types match the contract) |
 | `pip-audit` | no known vulnerabilities |

@@ -1,9 +1,10 @@
 /**
  * Authentication context for the web dashboard.
  *
- * Owns the single ApiClient, restores a session from stored tokens on load, and exposes
- * sign-in / sign-out. Mirrors the mobile AuthProvider so behaviour is consistent across
- * clients — the only difference is the token store (localStorage here).
+ * Owns the single ApiClient, restores a session on load, and exposes sign-in / sign-out.
+ * Mirrors the mobile AuthProvider, with one deliberate difference: the browser uses the
+ * cookie refresh transport, so the long-lived credential is never reachable from JavaScript
+ * and the access token is held in memory only (see `lib/tokenStore`).
  */
 
 import {
@@ -43,6 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
       new ApiClient({
         baseUrl: config.apiBaseUrl,
         tokens: webTokenStore,
+        // The refresh token lives in an httpOnly cookie the page cannot read.
+        refreshTransport: 'cookie',
         onAuthFailure: () => {
           setUser(null);
           setStatus('unauthenticated');
@@ -52,20 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
   );
 
   const restore = useCallback(async () => {
-    const token = await webTokenStore.getAccessToken();
-    if (!token) {
-      setStatus('unauthenticated');
-      return;
-    }
+    // No local token to inspect: after a reload the access token is gone by design, and the
+    // only way to learn whether the session survived is to ask. The request 401s, the client
+    // refreshes against the cookie, and the retry succeeds — or it does not and we are
+    // genuinely signed out.
     try {
       setUser(await client.getMe());
       setStatus('authenticated');
     } catch (error) {
-      // Offline at load is not a sign-out — keep the session and let cached data fill in.
-      if (error instanceof ApiError && error.code === 'network_error') {
-        setStatus('authenticated');
-        return;
-      }
+      if (!(error instanceof ApiError)) throw error;
       await webTokenStore.clear();
       setStatus('unauthenticated');
     }

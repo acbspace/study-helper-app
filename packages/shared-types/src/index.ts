@@ -112,7 +112,11 @@ export interface Me {
 
 export interface AuthTokens {
   access_token: string;
-  refresh_token: string;
+  /**
+   * Null when the client asked for the cookie transport: the server set the refresh token
+   * as an httpOnly cookie instead, so it is deliberately not readable here.
+   */
+  refresh_token: string | null;
   token_type: string;
   expires_in: number;
 }
