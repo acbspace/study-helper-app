@@ -14,6 +14,7 @@ import { minTouchTarget, radius, spacing } from '@study-league/design-tokens';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { ReportButton } from '@/components/ReportButton';
 import { EmptyState, ErrorState, LoadingState } from '@/components/StateViews';
 import { Text } from '@/components/Text';
 import {
@@ -99,7 +100,17 @@ export function FriendsScreen(): React.ReactElement {
               key={friend.friendship_id}
               user={friend.user}
               presenceState={presenceByUser.get(friend.user.id)}
-              action={<RemoveAction friendshipId={friend.friendship_id} />}
+              action={
+                <View style={styles.actions}>
+                  <ReportButton
+                    testID={`report-user-${friend.user.id}`}
+                    subjectType="user"
+                    subjectId={friend.user.id}
+                    subjectLabel={friend.user.display_name}
+                  />
+                  <RemoveAction friendshipId={friend.friendship_id} />
+                </View>
+              }
             />
           ))
         )}

@@ -9,6 +9,7 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import type {
+  AppNotification,
   CommunityPost,
   DailyPlan,
   Friend,
@@ -22,12 +23,14 @@ import type {
   PostReactionEmoji,
   PostTopic,
   PublicUser,
+  ReportSubjectType,
   ScoreBreakdown,
   StatisticsSummary,
   Subject,
   Task,
   TaskPriority,
   TaskStatus,
+  UnreadCount,
   UserPresence,
   UserProfile,
   UserSearchResult,
@@ -57,6 +60,8 @@ export const queryKeys = {
   leagueMissions: ['league', 'missions'] as const,
   goals: ['goals'] as const,
   blockedUsers: ['users', 'blocked'] as const,
+  notifications: ['notifications'] as const,
+  unreadCount: ['notifications', 'unread-count'] as const,
   yearlyInsights: (year?: number) => ['statistics', 'yearly', year ?? 'current'] as const,
   posts: (topic?: string) => ['community', 'posts', topic ?? 'all'] as const,
   postDetail: (id: string) => ['community', 'post', id] as const,
@@ -592,6 +597,67 @@ export function useBlockedUsers(): UseQueryResult<PublicUser[]> {
     queryFn: () => client.listBlockedUsers(),
     enabled: status === 'authenticated',
     ...OFFLINE_TOLERANT,
+  });
+}
+
+// ------------------------------------------------------------------ notifications
+
+export function useNotifications(): UseQueryResult<AppNotification[]> {
+  const { client, status } = useAuth();
+  return useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: () => client.listNotifications({ limit: 50 }),
+    enabled: status === 'authenticated',
+    ...OFFLINE_TOLERANT,
+  });
+}
+
+/** Drives the tab-bar badge, so it polls rather than waiting for a screen visit. */
+export function useUnreadNotificationCount(): UseQueryResult<UnreadCount> {
+  const { client, status } = useAuth();
+  return useQuery({
+    queryKey: queryKeys.unreadCount,
+    queryFn: () => client.getUnreadNotificationCount(),
+    enabled: status === 'authenticated',
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    retry: 1,
+  });
+}
+
+function useNotificationRefresh() {
+  const queryClient = useQueryClient();
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount });
+  };
+}
+
+export function useMarkNotificationRead() {
+  const { client } = useAuth();
+  const refresh = useNotificationRefresh();
+  return useMutation({
+    mutationFn: (notificationId: string) => client.markNotificationRead(notificationId),
+    onSuccess: refresh,
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const { client } = useAuth();
+  const refresh = useNotificationRefresh();
+  return useMutation({
+    mutationFn: () => client.markAllNotificationsRead(),
+    onSuccess: refresh,
+  });
+}
+
+// ------------------------------------------------------------------ reporting
+
+export function useReportContent() {
+  const { client } = useAuth();
+  return useMutation({
+    mutationFn: (input: { subject_type: ReportSubjectType; subject_id: string; reason: string }) =>
+      client.reportContent(input),
   });
 }
 

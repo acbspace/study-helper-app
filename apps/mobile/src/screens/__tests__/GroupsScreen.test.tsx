@@ -32,6 +32,13 @@ jest.mock('@/features/api/queries', () => ({
   useJoinGroup: () => ({ mutate: mockJoinMutate, isPending: false }),
   useJoinGroupByCode: () => ({ mutate: mockJoinByCodeMutate, isPending: false, isError: false }),
   useLeaveGroup: () => ({ mutate: mockLeaveMutate, isPending: false }),
+  // Each group row carries a report control; the control itself has its own test.
+  useReportContent: () => ({
+    mutate: jest.fn(),
+    reset: jest.fn(),
+    isPending: false,
+    isError: false,
+  }),
   useAcceptGroupInvitation: () => ({ mutate: mockAcceptMutate, isPending: false }),
   useDeclineGroupInvitation: () => ({ mutate: mockDeclineMutate, isPending: false }),
 }));

@@ -1,4 +1,5 @@
 import type {
+  AppNotification,
   AuthResponse,
   AuthTokens,
   CommunityComment,
@@ -22,8 +23,11 @@ import type {
   PostTopic,
   PresenceState,
   PublicUser,
+  PushPlatform,
   ReactionEmoji,
   RealtimeTicket,
+  Report,
+  ReportSubjectType,
   ScoreBreakdown,
   SeasonHistoryEntry,
   StatisticsSummary,
@@ -34,6 +38,7 @@ import type {
   Task,
   TaskPriority,
   TaskStatus,
+  UnreadCount,
   UserPresence,
   UserProfile,
   UserSearchResult,
@@ -762,5 +767,58 @@ export class ApiClient {
 
   listBookmarkedPosts(): Promise<CommunityPost[]> {
     return this.request<CommunityPost[]>('/community/bookmarks');
+  }
+
+  // ---------------------------------------------------------------- notifications
+
+  listNotifications(
+    options: { unreadOnly?: boolean; limit?: number } = {},
+  ): Promise<AppNotification[]> {
+    return this.request<AppNotification[]>('/notifications', {
+      query: { unread_only: options.unreadOnly, limit: options.limit },
+    });
+  }
+
+  /** Cheap enough to poll for the tab badge. */
+  getUnreadNotificationCount(): Promise<UnreadCount> {
+    return this.request<UnreadCount>('/notifications/unread-count');
+  }
+
+  markNotificationRead(notificationId: string): Promise<AppNotification> {
+    return this.request<AppNotification>(`/notifications/${notificationId}/read`, {
+      method: 'POST',
+    });
+  }
+
+  markAllNotificationsRead(): Promise<void> {
+    return this.request<void>('/notifications/read-all', { method: 'POST' });
+  }
+
+  /**
+   * Register this installation's Expo push token.
+   *
+   * The server binds it to the device resolved from `X-Device-Id`, so a client without a
+   * device id is rejected rather than having its token attached to whichever installation
+   * registered last.
+   */
+  registerPushToken(token: string, platform: PushPlatform = 'unknown'): Promise<void> {
+    return this.request<void>('/me/push-token', {
+      method: 'PUT',
+      body: { token, platform },
+    });
+  }
+
+  // ---------------------------------------------------------------- reporting
+
+  reportContent(input: {
+    subject_type: ReportSubjectType;
+    subject_id: string;
+    reason: string;
+  }): Promise<Report> {
+    return this.request<Report>('/reports', { method: 'POST', body: input });
+  }
+
+  listMyReports(): Promise<Report[]> {
+    return this.request<Report[]>('/reports');
   }
 }

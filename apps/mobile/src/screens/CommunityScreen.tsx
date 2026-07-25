@@ -15,6 +15,7 @@ import { minTouchTarget, radius, spacing } from '@study-league/design-tokens';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { ReportButton } from '@/components/ReportButton';
 import { EmptyState, ErrorState, LoadingState } from '@/components/StateViews';
 import { Text } from '@/components/Text';
 import { useCreatePost, usePosts, useReactToPost, useToggleBookmark } from '@/features/api/queries';
@@ -128,6 +129,12 @@ function PostCard({ post }: { post: CommunityPost }): React.ReactElement {
           variant="ghost"
           onPress={() => bookmark.mutate({ postId: post.id, bookmarked: post.bookmarked })}
           accessibilityHint={post.bookmarked ? 'Remove bookmark' : 'Bookmark this post'}
+        />
+        <ReportButton
+          testID={`report-post-${post.id}`}
+          subjectType="post"
+          subjectId={post.id}
+          subjectLabel="this post"
         />
       </View>
     </Card>

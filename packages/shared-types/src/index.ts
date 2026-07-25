@@ -544,3 +544,46 @@ export interface CommunityPostDetail {
   post: CommunityPost;
   comments: CommunityComment[];
 }
+
+// --- notifications ---
+
+export type NotificationKind =
+  | 'friend_request'
+  | 'group_invite'
+  | 'session_flagged'
+  | 'league_promoted'
+  | 'league_relegated'
+  | 'mission_completed'
+  | 'encouragement';
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  /** Kind-specific payload — ids the client can use to route to the right screen. */
+  data: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface UnreadCount {
+  unread: number;
+}
+
+export type PushPlatform = 'ios' | 'android' | 'web' | 'unknown';
+
+// --- reporting ---
+
+export type ReportSubjectType = 'user' | 'group' | 'post' | 'comment';
+
+export type ReportStatus = 'open' | 'actioned' | 'dismissed';
+
+export interface Report {
+  id: string;
+  subject_type: ReportSubjectType;
+  subject_id: string;
+  reason: string;
+  status: ReportStatus;
+  created_at: string;
+}

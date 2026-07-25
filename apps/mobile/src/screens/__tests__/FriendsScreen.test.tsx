@@ -35,6 +35,13 @@ jest.mock('@/features/api/queries', () => ({
   useAcceptFriendRequest: () => ({ mutate: mockAcceptMutate, isPending: false }),
   useDeclineFriendRequest: () => ({ mutate: mockDeclineMutate, isPending: false }),
   useRemoveFriendship: () => ({ mutate: mockRemoveMutate, isPending: false }),
+  // Each friend row carries a report control; the control itself has its own test.
+  useReportContent: () => ({
+    mutate: jest.fn(),
+    reset: jest.fn(),
+    isPending: false,
+    isError: false,
+  }),
 }));
 
 function person(overrides: Partial<PublicUser> & { id: string }): PublicUser {

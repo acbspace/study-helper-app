@@ -22,6 +22,13 @@ jest.mock('@/features/api/queries', () => ({
   useCreatePost: () => ({ mutate: mockCreateMutate, isPending: false }),
   useReactToPost: () => ({ mutate: mockReactMutate, isPending: false }),
   useToggleBookmark: () => ({ mutate: mockBookmarkMutate, isPending: false }),
+  // Each post carries a report control; the control itself is covered by its own test.
+  useReportContent: () => ({
+    mutate: jest.fn(),
+    reset: jest.fn(),
+    isPending: false,
+    isError: false,
+  }),
 }));
 
 function post(overrides: Partial<CommunityPost> & { id: string; title: string }): CommunityPost {

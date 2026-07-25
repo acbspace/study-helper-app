@@ -14,6 +14,7 @@ import { minTouchTarget, radius, spacing } from '@study-league/design-tokens';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { ReportButton } from '@/components/ReportButton';
 import { EmptyState, ErrorState, LoadingState } from '@/components/StateViews';
 import { Text } from '@/components/Text';
 import {
@@ -89,7 +90,21 @@ export function GroupsScreen(): React.ReactElement {
           />
         ) : (
           mine.map((group) => (
-            <GroupRow key={group.id} group={group} action={<LeaveAction groupId={group.id} />} />
+            <GroupRow
+              key={group.id}
+              group={group}
+              action={
+                <View style={styles.actions}>
+                  <ReportButton
+                    testID={`report-group-${group.id}`}
+                    subjectType="group"
+                    subjectId={group.id}
+                    subjectLabel={group.name}
+                  />
+                  <LeaveAction groupId={group.id} />
+                </View>
+              }
+            />
           ))
         )}
       </Card>

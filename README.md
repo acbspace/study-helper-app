@@ -74,9 +74,13 @@ explainable ([ADR-0006](docs/decisions/ADR-0006-league-scoring-versioned.md)).
   `api-client`, `shared-types`, and `design-tokens`, so it stays in lock-step with the API and
   matches the mobile look: verified time, streak, the week's shape, league standing, and which
   friends are studying now.
-- **Notifications** — an in-app inbox (friend requests, group invites, and more) plus push
-  delivery through a retryable worker job that batches to each opted-in device's Expo token
-  and is idempotent per notification.
+- **Notifications** — an in-app inbox (friend requests, group invites, league results) with an
+  unread badge in the header, plus push delivery through a retryable worker job that batches
+  to each opted-in device's Expo token and is idempotent per notification. The client
+  registers its Expo token once per sign-in, gated on the user's own notification setting
+  rather than only the OS permission.
+- **Reporting** — report a user, group, or post from the surface you are looking at. Reports
+  feed the moderator queue below; the reporter is never disclosed to the person reported.
 - **Moderator review queue** — an admin-gated surface (`/admin/reports/*`, gated on
   `users.is_admin`) to review reports and resolve them: dismiss, or action with content
   removal. Removals are soft-deletes, every resolution is written to the append-only audit log,
@@ -284,9 +288,9 @@ npm run format          # prettier --write
 ```bash
 # from the repo root
 npm run --workspace apps/mobile typecheck    # tsc --noEmit
-npm run --workspace apps/mobile test         # 87 tests (jest-expo)
+npm run --workspace apps/mobile test         # 115 tests (jest-expo)
 npm run coverage:mobile                      # …with a coverage report
-npm run test:packages                        # 7 tests (api-client transport, vitest)
+npm run test:packages                        # 14 tests (api-client transport, vitest)
 ```
 
 ### Web dashboard
@@ -344,8 +348,8 @@ Latest local run, all green:
 | `eslint .` (all JS workspaces) | clean |
 | `prettier --check .` | clean |
 | `tsc --noEmit` (mobile + packages) | clean |
-| `jest` (mobile) | **87 passed** |
-| `vitest` (api-client transport) | **11 passed** |
+| `jest` (mobile) | **115 passed** |
+| `vitest` (api-client transport) | **14 passed** |
 | `tsc --noEmit` (web) | clean |
 | `vitest` (web) | **20 passed** |
 | `vite build` (web) | bundles clean |

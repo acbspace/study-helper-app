@@ -46,6 +46,12 @@
   retryable worker job (`worker/jobs/push_notifier.py`) over `PushService`: it batches pending
   notifications to each opted-in device's Expo token, is idempotent via a `pushed_at` marker,
   and leaves a row unpushed for retry if the provider is unreachable.
+  The **client half arrived late**: until the inbox screen, the header badge, and
+  `usePushRegistration` existed, no client ever called `PUT /me/push-token`, so the delivery
+  job ran every two minutes against a permanently empty set of tokens.
+- **Reporting UI (in repo)** — `ReportButton` on users, groups, and posts. The moderation
+  pipeline was complete server-side from M2 but had no entrance, so the queue could not
+  receive anything.
 - **Rate limiting (in repo)** — a shared bucket across social writes (requests, invites,
   reactions, reports); blocklist enforcement on every social read.
 

@@ -217,6 +217,60 @@ describe('ApiClient', () => {
     expect(onAuthFailure).toHaveBeenCalled();
   });
 
+  it('registers a push token against the calling device', async () => {
+    const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
+    // The real endpoint answers 204; `Response` refuses a body at that status, and the
+    // assertions here are all about the request anyway.
+    const fetchImpl = vi.fn(async () => jsonResponse(200, null));
+    const client = new ApiClient({
+      baseUrl: 'http://api/api/v1',
+      tokens,
+      fetchImpl,
+      deviceId: 'install-7',
+    });
+
+    await client.registerPushToken('ExponentPushToken[abc]', 'ios');
+
+    const call = requestOfCall(fetchImpl, 0);
+    expect(call.url).toBe('http://api/api/v1/me/push-token');
+    expect(call.init.method).toBe('PUT');
+    // Without the device header the server rejects the token rather than attaching it to
+    // whichever installation registered last.
+    expect(headersOfCall(fetchImpl, 0)).toMatchObject({ 'X-Device-Id': 'install-7' });
+    expect(JSON.parse(String(call.init.body))).toEqual({
+      token: 'ExponentPushToken[abc]',
+      platform: 'ios',
+    });
+  });
+
+  it('passes notification filters as query parameters', async () => {
+    const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
+    const fetchImpl = vi.fn(async () => jsonResponse(200, []));
+    const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
+
+    await client.listNotifications({ unreadOnly: true, limit: 20 });
+
+    expect(requestOfCall(fetchImpl, 0).url).toBe(
+      'http://api/api/v1/notifications?unread_only=true&limit=20',
+    );
+  });
+
+  it('files a report', async () => {
+    const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
+    const fetchImpl = vi.fn(async () => jsonResponse(201, { id: 'r1' }));
+    const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
+
+    await client.reportContent({ subject_type: 'post', subject_id: 'p1', reason: 'Spam' });
+
+    const call = requestOfCall(fetchImpl, 0);
+    expect(call.url).toBe('http://api/api/v1/reports');
+    expect(JSON.parse(String(call.init.body))).toEqual({
+      subject_type: 'post',
+      subject_id: 'p1',
+      reason: 'Spam',
+    });
+  });
+
   it('patches the profile and the settings on their own endpoints', async () => {
     const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
     const fetchImpl = vi.fn(async () => jsonResponse(200, { id: 'u1' }));
