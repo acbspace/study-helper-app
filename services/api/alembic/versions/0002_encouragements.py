@@ -25,8 +25,12 @@ def upgrade() -> None:
         sa.Column("from_user_id", sa.Uuid(), nullable=False),
         sa.Column("to_user_id", sa.Uuid(), nullable=False),
         sa.Column("emoji", sa.String(length=16), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint("from_user_id <> to_user_id", name="ck_encouragement_not_self"),
         sa.ForeignKeyConstraint(["from_user_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["to_user_id"], ["users.id"], ondelete="CASCADE"),

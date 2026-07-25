@@ -62,7 +62,11 @@ describe('FriendsScreen', () => {
       isLoading: false,
       isError: false,
       data: [
-        { friendship_id: 'f1', since: '2026-07-01T00:00:00Z', user: person({ id: 'bob', display_name: 'Bob' }) },
+        {
+          friendship_id: 'f1',
+          since: '2026-07-01T00:00:00Z',
+          user: person({ id: 'bob', display_name: 'Bob' }),
+        },
       ],
       refetch: jest.fn(),
     });

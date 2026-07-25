@@ -60,9 +60,7 @@ export function Dashboard(): ReactElement {
           <Spinner label="Loading your dashboard…" />
         ) : stats.isError && !stats.data ? (
           <Card testId="dashboard-error">
-            <p style={{ color: theme.danger, margin: 0 }}>
-              We could not load your statistics.
-            </p>
+            <p style={{ color: theme.danger, margin: 0 }}>We could not load your statistics.</p>
             <Button label="Try again" variant="ghost" onClick={() => void stats.refetch()} />
           </Card>
         ) : stats.data ? (
@@ -162,7 +160,12 @@ function LeagueCard(): ReactElement {
             {league.data.division_name} · {league.data.category_name}
           </span>
           <span
-            style={{ fontSize: 26, fontWeight: 700, color: theme.textPrimary, fontVariantNumeric: 'tabular-nums' }}
+            style={{
+              fontSize: 26,
+              fontWeight: 700,
+              color: theme.textPrimary,
+              fontVariantNumeric: 'tabular-nums',
+            }}
           >
             {league.data.total_points} points
           </span>
@@ -199,7 +202,11 @@ function PresenceCard(): ReactElement {
                 fontSize: 13,
               }}
             >
-              {row.state === 'studying' ? 'Studying' : row.state === 'break' ? 'On a break' : 'Online'}
+              {row.state === 'studying'
+                ? 'Studying'
+                : row.state === 'break'
+                  ? 'On a break'
+                  : 'Online'}
             </span>
           </div>
         ))

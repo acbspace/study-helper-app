@@ -18,7 +18,7 @@ jobs:
           POSTGRES_USER: study
           POSTGRES_PASSWORD: study_ci_pw
           POSTGRES_DB: study_league_test
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U study"
           --health-interval 5s
@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
           cache: pip
       - name: Install
         run: pip install -e ".[dev]"
@@ -38,8 +38,11 @@ jobs:
           ruff format --check .
       - name: Type check (mypy)
         run: mypy app
-      - name: Tests (SQLite)
-        run: pytest -q
+      - name: OpenAPI snapshot is current
+        # Guards docs/api/openapi.json, which the TypeScript clients are generated from.
+        run: python -m scripts.openapi_snapshot --check
+      - name: Tests (SQLite, with coverage)
+        run: pytest -q --cov=app --cov-report=term --cov-report=xml
       - name: Tests (PostgreSQL)
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://study:study_ci_pw@localhost:5432/study_league_test
@@ -48,6 +51,39 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://study:study_ci_pw@localhost:5432/study_league_test
         run: alembic upgrade head
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-api
+          path: services/api/coverage.xml
+          if-no-files-found: warn
+
+  worker:
+    # The worker's jobs are the only thing that closes stale sessions, scores the league, and
+    # delivers push. Its suite ran nowhere before, so a break stayed invisible until deploy.
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        # `study-league-api` is a sibling path dependency, so it is installed first.
+        run: |
+          pip install -e ../api
+          pip install -e ".[dev]"
+      - name: Lint (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Type check (mypy)
+        run: mypy worker
+      - name: Tests
+        run: pytest -q
 
   frontend:
     runs-on: ubuntu-latest
@@ -59,11 +95,50 @@ jobs:
           cache: npm
       - name: Install workspaces
         run: npm ci
+      - name: Lint (eslint)
+        run: npm run lint
+      - name: Format (prettier)
+        run: npm run format:check
       - name: Type check (mobile)
         run: npm run --workspace apps/mobile typecheck
       - name: Tests (mobile)
-        run: npm run --workspace apps/mobile test -- --ci
+        run: npm run --workspace apps/mobile test -- --ci --coverage
       - name: Type check (web)
         run: npm run --workspace apps/web typecheck
       - name: Tests (web)
-        run: npm run --workspace apps/web test
+        run: npm run --workspace apps/web test -- --coverage
+      - name: Build (web)
+        run: npm run --workspace apps/web build
+      - name: Generated API types are current
+        # Regenerating must be a no-op; a diff means the OpenAPI snapshot moved and the
+        # clients were not regenerated with it.
+        run: |
+          npm run generate:api
+          git diff --exit-code -- packages/shared-types/src/generated
+
+  audit:
+    # Advisory only: a newly published advisory should surface on the next run without
+    # turning an unrelated pull request red. Tighten to blocking once the backlog is clear.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Audit Python dependencies
+        # Audits the resolved environment, which is what actually ships — not just the
+        # direct requirements listed in pyproject.
+        run: |
+          pip install pip-audit
+          pip install -e "services/api[dev]"
+          pip-audit --desc
+      - name: Audit JavaScript dependencies
+        run: |
+          npm ci
+          npm audit --audit-level=high

@@ -277,10 +277,9 @@ export async function getRecentSessions(limit = 20): Promise<LocalSession[]> {
  */
 export async function pruneSyncedSessions(olderThanMs: number): Promise<void> {
   const db = await getDatabase();
-  await db.runAsync(
-    `DELETE FROM local_sessions WHERE sync_state = 'synced' AND started_at < ?`,
-    [olderThanMs],
-  );
+  await db.runAsync(`DELETE FROM local_sessions WHERE sync_state = 'synced' AND started_at < ?`, [
+    olderThanMs,
+  ]);
 }
 
 /** Wipe local data on sign-out so accounts never share a device cache. */

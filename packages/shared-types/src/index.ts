@@ -18,11 +18,7 @@ export type SyncOutcome = 'accepted' | 'merged' | 'flagged' | 'rejected';
 
 /** The signed-in user's relationship to another user, as reported by search. */
 export type RelationshipState =
-  | 'none'
-  | 'friends'
-  | 'request_sent'
-  | 'request_received'
-  | 'blocked';
+  'none' | 'friends' | 'request_sent' | 'request_received' | 'blocked';
 
 export type GroupVisibility = 'public' | 'private' | 'invite';
 export type GroupRole = 'owner' | 'moderator' | 'member';
@@ -380,10 +376,7 @@ export interface PongEvent {
 }
 
 export type RealtimeEvent =
-  | PresenceChangedEvent
-  | ReactionCreatedEvent
-  | SubscriptionAckEvent
-  | PongEvent;
+  PresenceChangedEvent | ReactionCreatedEvent | SubscriptionAckEvent | PongEvent;
 
 // ---------------------------------------------------------------- league
 
@@ -519,13 +512,7 @@ export interface YearlyInsights {
 // ---------------------------------------------------------------- community
 
 export type PostTopic =
-  | 'general'
-  | 'motivation'
-  | 'study_tips'
-  | 'resources'
-  | 'wins'
-  | 'accountability'
-  | 'questions';
+  'general' | 'motivation' | 'study_tips' | 'resources' | 'wins' | 'accountability' | 'questions';
 
 export type PostReactionEmoji = 'like' | 'insightful' | 'celebrate' | 'support' | 'curious';
 

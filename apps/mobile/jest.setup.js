@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Jest setup: mock the native modules the app depends on.
  *

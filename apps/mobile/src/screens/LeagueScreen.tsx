@@ -62,8 +62,8 @@ export function LeagueScreen(): React.ReactElement {
         <Card testID="league-no-season">
           <Text variant="heading">No season is running</Text>
           <Text variant="body" color="secondary">
-            Seasons last four weeks. When the next one opens you will be placed in a cohort of
-            20–30 students with similar goals.
+            Seasons last four weeks. When the next one opens you will be placed in a cohort of 20–30
+            students with similar goals.
           </Text>
         </Card>
       ) : null}
@@ -72,8 +72,8 @@ export function LeagueScreen(): React.ReactElement {
         <Card testID="league-join">
           <Text variant="heading">Join this season</Text>
           <Text variant="body" color="secondary">
-            You will be placed in a cohort with students in your category, starting in Bronze.
-            Your first season is provisional.
+            You will be placed in a cohort with students in your category, starting in Bronze. Your
+            first season is provisional.
           </Text>
           {enroll.isError ? (
             <Text variant="caption" color="danger" accessibilityRole="alert">
@@ -92,10 +92,7 @@ export function LeagueScreen(): React.ReactElement {
       {standing.data ? (
         <>
           <StandingCard entry={standing.data} />
-          <LeaderboardCard
-            entries={leaderboard.data ?? []}
-            isLoading={leaderboard.isLoading}
-          />
+          <LeaderboardCard entries={leaderboard.data ?? []} isLoading={leaderboard.isLoading} />
           <BreakdownCard
             components={breakdown.data?.components ?? []}
             totalPoints={breakdown.data?.total_points ?? 0}
@@ -113,8 +110,8 @@ export function LeagueScreen(): React.ReactElement {
         <Text variant="body" color="secondary">
           Studying beyond your goal earns sharply reduced credit, so no one can out-grind a
           consistent week. Rest days you scheduled are never penalised. Manually entered time
-          appears in your own statistics but earns no League Points, and time flagged by
-          integrity checks is excluded with an explanation you can read.
+          appears in your own statistics but earns no League Points, and time flagged by integrity
+          checks is excluded with an explanation you can read.
         </Text>
       </Card>
     </ScrollView>

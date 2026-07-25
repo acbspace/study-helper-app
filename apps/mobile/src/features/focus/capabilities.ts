@@ -39,7 +39,7 @@ export function resolveFocusCapabilities(): FocusCapability[] {
       id: 'app_blocking',
       label: 'Block distracting apps',
       available: false,
-      reason: pending('App blocking', "the OS Screen Time / UsageStats permission"),
+      reason: pending('App blocking', 'the OS Screen Time / UsageStats permission'),
     },
     {
       id: 'distraction_alerts',

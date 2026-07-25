@@ -56,8 +56,18 @@ export function SignIn(): ReactElement {
       <Card testId="sign-in" style={{ width: 360, maxWidth: '100%', gap: spacing.md }}>
         <h1 style={{ color: theme.textPrimary, margin: 0, fontSize: 24 }}>Study League</h1>
         <p style={{ color: theme.textSecondary, margin: 0 }}>Sign in to your dashboard.</p>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs, color: theme.textSecondary }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}
+        >
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing.xs,
+              color: theme.textSecondary,
+            }}
+          >
             Email
             <input
               type="email"
@@ -68,7 +78,14 @@ export function SignIn(): ReactElement {
               style={inputStyle}
             />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs, color: theme.textSecondary }}>
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing.xs,
+              color: theme.textSecondary,
+            }}
+          >
             Password
             <input
               type="password"
@@ -84,7 +101,11 @@ export function SignIn(): ReactElement {
               {error}
             </p>
           ) : null}
-          <Button type="submit" label={submitting ? 'Signing in…' : 'Sign in'} disabled={submitting} />
+          <Button
+            type="submit"
+            label={submitting ? 'Signing in…' : 'Sign in'}
+            disabled={submitting}
+          />
         </form>
       </Card>
     </main>

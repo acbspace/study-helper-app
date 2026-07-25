@@ -1,0 +1,53 @@
+version: 2
+
+updates:
+  # JavaScript workspaces are all installed from the root lockfile, so one entry covers
+  # apps/mobile, apps/web, and packages/*.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Expo and React Native must move together; separate PRs would each fail CI.
+      expo-react-native:
+        patterns:
+          - expo
+          - expo-*
+          - react-native
+          - react-native-*
+          - '@expo/*'
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - eslint*
+          - '@eslint/*'
+          - typescript-eslint
+          - prettier*
+          - vitest
+          - '@vitest/*'
+          - jest*
+
+  - package-ecosystem: pip
+    directory: /services/api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # ruff and mypy are pinned exactly (see services/api/pyproject.toml); grouping them
+      # keeps a lint-tooling bump one reviewable PR that carries its own fixes.
+      lint-tooling:
+        patterns:
+          - ruff
+          - mypy
+
+  - package-ecosystem: pip
+    directory: /services/worker
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

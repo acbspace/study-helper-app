@@ -52,13 +52,15 @@ export function Button({
     ghost: 'transparent',
     danger: theme.danger,
   };
-  const labelColors: Record<NonNullable<ButtonProps['variant']>, 'inverse' | 'primary' | 'accent'> =
-    {
-      primary: 'inverse',
-      secondary: 'primary',
-      ghost: 'accent',
-      danger: 'inverse',
-    };
+  const labelColors: Record<
+    NonNullable<ButtonProps['variant']>,
+    'inverse' | 'primary' | 'accent'
+  > = {
+    primary: 'inverse',
+    secondary: 'primary',
+    ghost: 'accent',
+    danger: 'inverse',
+  };
 
   return (
     <Pressable

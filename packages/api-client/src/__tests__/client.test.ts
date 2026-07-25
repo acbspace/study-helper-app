@@ -81,9 +81,16 @@ describe('ApiClient', () => {
     const fetchImpl = jest
       .fn()
       .mockResolvedValueOnce(jsonResponse(401, { error: { code: 'token_expired', message: 'x' } }))
-      .mockResolvedValueOnce(jsonResponse(401, { error: { code: 'not_authenticated', message: 'x' } }));
+      .mockResolvedValueOnce(
+        jsonResponse(401, { error: { code: 'not_authenticated', message: 'x' } }),
+      );
 
-    const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, onAuthFailure, fetchImpl });
+    const client = new ApiClient({
+      baseUrl: 'http://api/api/v1',
+      tokens,
+      onAuthFailure,
+      fetchImpl,
+    });
 
     await expect(client.getMe()).rejects.toBeInstanceOf(ApiError);
     expect(onAuthFailure).toHaveBeenCalled();

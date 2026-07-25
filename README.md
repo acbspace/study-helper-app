@@ -230,10 +230,15 @@ Sign in with the seeded `demo@example.com` / `studyleague123`.
 ```bash
 cd services/api
 .venv\Scripts\pytest -q                 # 337 tests
+.venv\Scripts\pytest -q --cov=app       # …with a coverage report
 .venv\Scripts\ruff check .              # lint
 .venv\Scripts\ruff format --check .     # formatting
 .venv\Scripts\mypy app                  # strict type checking
+.venv\Scripts\python -m scripts.openapi_snapshot --check   # API contract has not drifted
 ```
+
+`ruff` and `mypy` are pinned to exact versions in `pyproject.toml`: a new lint rule in a
+patch release should be a deliberate upgrade commit, not a red build on an unrelated push.
 
 The suite runs on SQLite by default. To run it against PostgreSQL (as CI also does):
 
@@ -248,6 +253,19 @@ $env:TEST_DATABASE_URL = "postgresql+asyncpg://study:study_local_pw@localhost:54
 ```bash
 cd services/worker
 ..\api\.venv\Scripts\pytest -q          # 16 tests
+..\api\.venv\Scripts\ruff check .       # lint
+..\api\.venv\Scripts\mypy worker        # strict type checking
+```
+
+### JavaScript workspaces
+
+ESLint and Prettier run once at the repo root and cover `apps/*` and `packages/*`:
+
+```bash
+# from the repo root
+npm run lint            # eslint (typescript-eslint + react-hooks)
+npm run format:check    # prettier
+npm run format          # prettier --write
 ```
 
 ### Mobile & shared packages
@@ -256,6 +274,7 @@ cd services/worker
 # from the repo root
 npm run --workspace apps/mobile typecheck    # tsc --noEmit
 npm run --workspace apps/mobile test         # 74 tests (jest-expo)
+npm run coverage:mobile                      # …with a coverage report
 ```
 
 ### Web dashboard
@@ -269,11 +288,19 @@ npm run --workspace apps/web build           # production bundle
 
 ### Regenerate the typed API client
 
-With the API running on port 8000:
+`docs/api/openapi.json` is the checked-in contract the TypeScript types are generated from.
+No running server is needed — the schema is dumped from the app in-process:
 
 ```bash
+cd services/api
+.venv\Scripts\python -m scripts.openapi_snapshot --write   # refresh the contract
+cd ../..
 npm run generate:api        # writes packages/shared-types/src/generated/api.d.ts
 ```
+
+CI verifies both halves: that the snapshot still matches the application, and that
+regenerating the types produces no diff. A Pydantic schema change that the clients have not
+caught up with therefore fails the build instead of surfacing at runtime.
 
 ## Documentation
 
@@ -296,19 +323,27 @@ Latest local run, all green:
 
 | Check | Result |
 |---|---|
-| `pytest` (API, SQLite) | **337 passed** |
+| `pytest` (API, SQLite) | **337 passed**, 79% line coverage |
 | `pytest` (worker) | **16 passed** |
-| `ruff check` / `ruff format --check` (API) | clean |
-| `mypy app` (API, strict) | clean, 99 files |
+| `ruff check` / `ruff format --check` (API + worker) | clean |
+| `mypy app` / `mypy worker` (strict) | clean, 99 + 6 files |
+| `scripts.openapi_snapshot --check` | contract current, 80 paths |
+| `eslint .` (all JS workspaces) | clean |
+| `prettier --check .` | clean |
 | `tsc --noEmit` (mobile + packages) | clean |
-| `jest` (mobile) | **74 passed** |
+| `jest` (mobile) | **74 passed**, 54% line coverage |
 | `tsc --noEmit` (web) | clean |
 | `vitest` (web) | **17 passed** |
 | `vite build` (web) | bundles clean |
+| `npm run generate:api` | no diff (types match the contract) |
+| `pip-audit` | no known vulnerabilities |
 | `alembic upgrade head` → seed → live API smoke test | end-to-end OK |
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) additionally runs the backend
-suite against a real PostgreSQL service container on every push.
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs four jobs on every push:
+**backend** (lint, types, contract, tests on SQLite *and* a real PostgreSQL service
+container, migrations), **worker** (lint, types, tests), **frontend** (lint, formatting,
+types, tests, web bundle, generated-type drift), and an advisory **audit** job
+(`pip-audit`, `npm audit`) that reports without blocking.
 
 ## License
 

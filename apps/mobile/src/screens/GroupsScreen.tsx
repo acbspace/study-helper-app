@@ -283,7 +283,11 @@ function InvitationActions({ invitationId }: { invitationId: string }): React.Re
         onPress={() => decline.mutate(invitationId)}
         disabled={busy}
       />
-      <Button label="Accept" onPress={() => accept.mutate(invitationId)} loading={accept.isPending} />
+      <Button
+        label="Accept"
+        onPress={() => accept.mutate(invitationId)}
+        loading={accept.isPending}
+      />
     </View>
   );
 }

@@ -14,9 +14,23 @@
     "test:web": "npm run --workspace apps/web test",
     "typecheck:mobile": "npm run --workspace apps/mobile typecheck",
     "typecheck:web": "npm run --workspace apps/web typecheck",
-    "generate:api": "openapi-typescript http://localhost:8000/api/v1/openapi.json -o packages/shared-types/src/generated/api.d.ts"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "coverage:mobile": "npm run --workspace apps/mobile test -- --coverage --ci",
+    "coverage:web": "npm run --workspace apps/web test -- --coverage",
+    "generate:api": "openapi-typescript docs/api/openapi.json -o packages/shared-types/src/generated/api.d.ts"
   },
   "devDependencies": {
-    "openapi-typescript": "^7.4.0"
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^15.15.0",
+    "openapi-typescript": "^7.4.0",
+    "prettier": "^3.9.6",
+    "typescript-eslint": "^8.65.0"
   }
 }

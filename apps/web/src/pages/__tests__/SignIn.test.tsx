@@ -23,9 +23,7 @@ describe('SignIn', () => {
 
     fillAndSubmit('  student@example.com  ', 'password123');
 
-    await waitFor(() =>
-      expect(signIn).toHaveBeenCalledWith('student@example.com', 'password123'),
-    );
+    await waitFor(() => expect(signIn).toHaveBeenCalledWith('student@example.com', 'password123'));
   });
 
   it('shows a friendly message on invalid credentials', async () => {

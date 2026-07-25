@@ -98,33 +98,21 @@ export function InsightsScreen(): React.ReactElement {
           label="Goal days met"
           value={`${week.scheduled_days_met} of ${week.scheduled_days}`}
         />
-        <Metric
-          label="Goal completion"
-          value={`${Math.round(week.goal_completion_rate * 100)}%`}
-        />
+        <Metric label="Goal completion" value={`${Math.round(week.goal_completion_rate * 100)}%`} />
         <Metric label="Sessions" value={String(week.session_count)} />
-        <Metric
-          label="Average session"
-          value={formatDurationLong(week.average_session_seconds)}
-        />
+        <Metric label="Average session" value={formatDurationLong(week.average_session_seconds)} />
       </Card>
 
       {yearly.data ? (
         <Card testID="insights-year">
           <Text variant="heading">This year</Text>
-          <Metric
-            label="Verified time"
-            value={formatDurationLong(yearly.data.verified_seconds)}
-          />
+          <Metric label="Verified time" value={formatDurationLong(yearly.data.verified_seconds)} />
           <Metric label="Active days" value={String(yearly.data.active_days)} />
           <Metric label="Longest streak" value={`${yearly.data.longest_streak_days} days`} />
           {/* A compact 12-month bar of verified time. */}
           <View style={styles.monthsRow}>
             {yearly.data.months.map((month) => {
-              const busiest = Math.max(
-                ...yearly.data!.months.map((m) => m.verified_seconds),
-                1,
-              );
+              const busiest = Math.max(...yearly.data!.months.map((m) => m.verified_seconds), 1);
               return (
                 <View key={month.month} style={styles.monthCol}>
                   <View style={styles.monthTrack}>
@@ -152,11 +140,7 @@ export function InsightsScreen(): React.ReactElement {
         <Text variant="heading">Go deeper</Text>
         <View style={styles.linkRow}>
           <Button label="Goals" variant="secondary" onPress={() => router.push('/goals')} />
-          <Button
-            label="Community"
-            variant="secondary"
-            onPress={() => router.push('/community')}
-          />
+          <Button label="Community" variant="secondary" onPress={() => router.push('/community')} />
         </View>
       </Card>
 

@@ -28,7 +28,9 @@ export class ApiError extends Error {
   /** True when retrying later could plausibly succeed. */
   get isRetryable(): boolean {
     return (
-      this.code === 'network_error' || this.status === 429 || (this.status >= 500 && this.status < 600)
+      this.code === 'network_error' ||
+      this.status === 429 ||
+      (this.status >= 500 && this.status < 600)
     );
   }
 
@@ -40,7 +42,12 @@ export class ApiError extends Error {
   static fromResponse(status: number, body: unknown): ApiError {
     const parsed = body as Partial<ApiErrorBody> | null;
     if (parsed && typeof parsed === 'object' && parsed.error) {
-      return new ApiError(status, parsed.error.code, parsed.error.message, parsed.error.details ?? {});
+      return new ApiError(
+        status,
+        parsed.error.code,
+        parsed.error.message,
+        parsed.error.details ?? {},
+      );
     }
     return new ApiError(status, 'unknown_error', 'An unexpected error occurred.');
   }

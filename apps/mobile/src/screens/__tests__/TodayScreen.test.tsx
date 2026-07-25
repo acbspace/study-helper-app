@@ -34,8 +34,7 @@ jest.mock('@/features/sync/useSync', () => ({
 }));
 
 jest.mock('@/features/timer/timerStore', () => ({
-  useTimerStore: (selector: (state: unknown) => unknown) =>
-    selector({ state: { status: 'idle' } }),
+  useTimerStore: (selector: (state: unknown) => unknown) => selector({ state: { status: 'idle' } }),
 }));
 
 function renderScreen() {

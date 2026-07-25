@@ -29,10 +29,7 @@ export default function SubjectsScreen(): React.ReactElement {
 
   const handleCreate = () => {
     if (!trimmed) return;
-    createSubject.mutate(
-      { name: trimmed, color_hex: color },
-      { onSuccess: () => setName('') },
-    );
+    createSubject.mutate({ name: trimmed, color_hex: color }, { onSuccess: () => setName('') });
   };
 
   if (subjects.isLoading && !subjects.data) return <LoadingState label="Loading subjects…" />;

@@ -6,7 +6,14 @@
  */
 
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { minTouchTarget, radius, spacing } from '@study-league/design-tokens';
@@ -36,7 +43,8 @@ const signUpSchema = signInSchema.extend({
     .regex(/^[A-Za-z0-9_.]+$/, 'Letters, numbers, underscore and dot only'),
 });
 
-type SignInValues = z.infer<typeof signInSchema>;
+// Both modes share one form instance, so the wider sign-up shape types it; the sign-in
+// resolver simply validates a subset of the fields.
 type SignUpValues = z.infer<typeof signUpSchema>;
 
 export function SignInScreen(): React.ReactElement {
@@ -49,7 +57,9 @@ export function SignInScreen(): React.ReactElement {
   const isSignUp = mode === 'sign-up';
 
   const form = useForm<SignUpValues>({
-    resolver: zodResolver(isSignUp ? signUpSchema : (signInSchema as unknown as typeof signUpSchema)),
+    resolver: zodResolver(
+      isSignUp ? signUpSchema : (signInSchema as unknown as typeof signUpSchema),
+    ),
     defaultValues: { email: '', password: '', username: '' },
   });
 
@@ -83,8 +93,7 @@ export function SignInScreen(): React.ReactElement {
         <View style={styles.header}>
           <Text variant="display">Study League</Text>
           <Text variant="body" color="secondary">
-            Consistency beats cramming. Track focused study, plan your day, and compete
-            fairly.
+            Consistency beats cramming. Track focused study, plan your day, and compete fairly.
           </Text>
         </View>
 

@@ -16,7 +16,7 @@ down_revision: str | None = "0002_encouragements"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-_TS = dict(server_default=sa.func.now(), nullable=False)
+_TS = {"server_default": sa.func.now(), "nullable": False}
 
 
 def upgrade() -> None:
@@ -34,9 +34,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_community_posts_author_id", "community_posts", ["author_id"])
-    op.create_index(
-        "ix_community_posts_topic_created", "community_posts", ["topic", "created_at"]
-    )
+    op.create_index("ix_community_posts_topic_created", "community_posts", ["topic", "created_at"])
 
     op.create_table(
         "community_comments",

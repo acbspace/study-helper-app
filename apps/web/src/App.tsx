@@ -13,7 +13,14 @@ export function App(): ReactElement {
 
   if (status === 'loading') {
     return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: theme.background }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: theme.background,
+        }}
+      >
         <Spinner label="Starting Study League…" />
       </div>
     );

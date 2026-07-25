@@ -12,9 +12,10 @@ import { useTimerStore } from '@/features/timer/timerStore';
 import { flushOutbox, pendingCount } from '../outbox';
 
 /** A minimal client stub recording the payloads it receives. */
-function makeClient(
-  handler: (sessions: unknown[]) => Promise<{ results: SyncResult[] }>,
-): { client: ApiClient; calls: unknown[][] } {
+function makeClient(handler: (sessions: unknown[]) => Promise<{ results: SyncResult[] }>): {
+  client: ApiClient;
+  calls: unknown[][];
+} {
   const calls: unknown[][] = [];
   const client = {
     syncSessions: jest.fn(async (sessions: unknown[]) => {

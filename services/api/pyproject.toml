@@ -28,9 +28,13 @@ dependencies = [
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
     "httpx>=0.27",
-    "ruff>=0.6.9",
-    "mypy>=1.11",
+    # Linters and type checkers are pinned exactly: a new rule or a formatter change in a
+    # patch release turns an unrelated push red. Upgrades are a deliberate commit that also
+    # carries whatever fixes the new version demands.
+    "ruff==0.16.0",
+    "mypy==2.3.0",
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -51,10 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         // Preference unavailable on this platform; motion stays enabled.
       });
 
-    const subscription = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      setReduceMotion,
-    );
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
     return () => {
       cancelled = true;
       subscription.remove();

@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+coverage
+.expo
+package-lock.json
+
+# Python services own their formatting (ruff format).
+services
+
+# Generated artefacts — regenerate them, do not reformat them.
+packages/shared-types/src/generated
+docs/api/openapi.json
+
+# Prose is hand-wrapped for readability; a formatter would rewrap every paragraph.
+*.md

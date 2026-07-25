@@ -16,12 +16,7 @@ import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { ProgressBar } from '@/components/ProgressBar';
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  OfflineNotice,
-} from '@/components/StateViews';
+import { EmptyState, ErrorState, LoadingState, OfflineNotice } from '@/components/StateViews';
 import { Text } from '@/components/Text';
 import { useStatisticsSummary, useTodayPlan, useUpdateTask } from '@/features/api/queries';
 import { useSync } from '@/features/sync/useSync';
@@ -214,8 +209,8 @@ export function TodayScreen(): React.ReactElement {
       <Card testID="today-league">
         <Text variant="heading">Study League</Text>
         <Text variant="body" color="secondary">
-          Seasonal leagues open soon. League Points reward consistency and finishing what
-          you planned — not raw hours.
+          Seasonal leagues open soon. League Points reward consistency and finishing what you
+          planned — not raw hours.
         </Text>
       </Card>
 

@@ -123,7 +123,9 @@ export function UnsupportedFeatureNotice({
 }): React.ReactElement {
   const { theme } = useTheme();
   return (
-    <View style={[styles.banner, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}>
+    <View
+      style={[styles.banner, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}
+    >
       <Text variant="label">{feature} is not available on this device</Text>
       <Text variant="caption" color="secondary">
         {reason}

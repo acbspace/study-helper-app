@@ -16,6 +16,9 @@ venv/
 .pytest_cache/
 htmlcov/
 .coverage
+.coverage.*
+coverage/
+coverage.xml
 *.egg-info/
 
 # Env / secrets — never commit real values

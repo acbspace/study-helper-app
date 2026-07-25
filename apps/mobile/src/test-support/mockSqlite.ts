@@ -153,9 +153,7 @@ export function createMockDatabase(): MockDatabase {
       if (upper.includes('MAX(SEQUENCE)')) {
         const sessionId = params[0] as string;
         const matching = events.filter((event) => event.session_id === sessionId);
-        const max = matching.length
-          ? Math.max(...matching.map((event) => event.sequence))
-          : null;
+        const max = matching.length ? Math.max(...matching.map((event) => event.sequence)) : null;
         return { max_sequence: max } as T;
       }
 
@@ -185,8 +183,7 @@ export function createMockDatabase(): MockDatabase {
       if (upper.includes("SYNC_STATE IN ('LOCAL_ONLY', 'SYNCING')")) {
         return [...sessions.values()]
           .filter(
-            (session) =>
-              session.sync_state === 'local_only' || session.sync_state === 'syncing',
+            (session) => session.sync_state === 'local_only' || session.sync_state === 'syncing',
           )
           .sort((a, b) => a.started_at - b.started_at) as T[];
       }

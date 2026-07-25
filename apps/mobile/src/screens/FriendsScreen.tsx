@@ -272,7 +272,11 @@ function IncomingActions({ friendshipId }: { friendshipId: string }): React.Reac
         onPress={() => decline.mutate(friendshipId)}
         disabled={busy}
       />
-      <Button label="Accept" onPress={() => accept.mutate(friendshipId)} loading={accept.isPending} />
+      <Button
+        label="Accept"
+        onPress={() => accept.mutate(friendshipId)}
+        loading={accept.isPending}
+      />
     </View>
   );
 }

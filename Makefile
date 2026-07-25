@@ -4,9 +4,11 @@
 
 PY ?= python
 API_DIR = services/api
+WORKER_DIR = services/worker
 
 .PHONY: help infra-up infra-down api-install api-run migrate seed test lint typecheck \
-        mobile-install mobile-start mobile-test mobile-typecheck check
+        mobile-install mobile-start mobile-test mobile-typecheck check \
+        worker-test worker-lint worker-typecheck coverage openapi lint-js format check-js
 
 help:
 	@echo "infra-up / infra-down   Start/stop PostgreSQL + Redis"
@@ -15,6 +17,10 @@ help:
 	@echo "seed                    Seed development data"
 	@echo "api-run                 Start FastAPI with reload"
 	@echo "test / lint / typecheck Backend checks"
+	@echo "worker-*                Worker checks"
+	@echo "coverage                Backend tests with a coverage report"
+	@echo "openapi                 Refresh docs/api/openapi.json + generated TS types"
+	@echo "lint-js / format        ESLint / Prettier across the JS workspaces"
 	@echo "mobile-*                Mobile equivalents"
 	@echo "check                   Everything CI runs"
 
@@ -45,6 +51,32 @@ lint:
 typecheck:
 	cd $(API_DIR) && .venv/bin/mypy app
 
+coverage:
+	cd $(API_DIR) && .venv/bin/pytest -q --cov=app --cov-report=term-missing:skip-covered
+
+# Regenerate the API contract and everything derived from it, in dependency order.
+openapi:
+	cd $(API_DIR) && .venv/bin/python -m scripts.openapi_snapshot --write
+	npm run generate:api
+
+worker-test:
+	cd $(WORKER_DIR) && ../api/.venv/bin/pytest -q
+
+worker-lint:
+	cd $(WORKER_DIR) && ../api/.venv/bin/ruff check . && ../api/.venv/bin/ruff format --check .
+
+worker-typecheck:
+	cd $(WORKER_DIR) && ../api/.venv/bin/mypy worker
+
+lint-js:
+	npm run lint
+
+format:
+	npm run format
+
+check-js:
+	npm run lint && npm run format:check
+
 mobile-install:
 	npm install
 
@@ -57,4 +89,5 @@ mobile-test:
 mobile-typecheck:
 	npm run --workspace apps/mobile typecheck
 
-check: lint typecheck test mobile-typecheck mobile-test
+check: lint typecheck test worker-lint worker-typecheck worker-test check-js \
+       mobile-typecheck mobile-test

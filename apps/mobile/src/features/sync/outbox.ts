@@ -37,9 +37,7 @@ const EMPTY_SUMMARY: FlushSummary = {
 const SYNCED_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** Build the wire payload for one locally stored session. */
-export async function buildPayload(
-  session: db.LocalSession,
-): Promise<SyncSessionPayload | null> {
+export async function buildPayload(session: db.LocalSession): Promise<SyncSessionPayload | null> {
   const events = await db.getEventRows(session.id);
   // A session with no events carries no information; skip rather than send a rejectable
   // payload.
