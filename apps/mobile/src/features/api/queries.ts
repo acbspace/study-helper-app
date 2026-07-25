@@ -21,6 +21,7 @@ import type {
   LeagueStanding,
   PostReactionEmoji,
   PostTopic,
+  PublicUser,
   ScoreBreakdown,
   StatisticsSummary,
   Subject,
@@ -28,7 +29,9 @@ import type {
   TaskPriority,
   TaskStatus,
   UserPresence,
+  UserProfile,
   UserSearchResult,
+  UserSettings,
   YearlyInsights,
 } from '@study-league/api-client';
 
@@ -53,6 +56,7 @@ export const queryKeys = {
   leagueBreakdown: ['league', 'breakdown'] as const,
   leagueMissions: ['league', 'missions'] as const,
   goals: ['goals'] as const,
+  blockedUsers: ['users', 'blocked'] as const,
   yearlyInsights: (year?: number) => ['statistics', 'yearly', year ?? 'current'] as const,
   posts: (topic?: string) => ['community', 'posts', topic ?? 'all'] as const,
   postDetail: (id: string) => ['community', 'post', id] as const,
@@ -550,5 +554,57 @@ export function useFriendsPresence(): UseQueryResult<UserPresence[]> {
     staleTime: 15_000,
     refetchInterval: 30_000,
     retry: 1,
+  });
+}
+
+// ------------------------------------------------------------------ profile & settings
+
+export function useUpdateProfile() {
+  const { client, refreshUser } = useAuth();
+  return useMutation({
+    mutationFn: (changes: Partial<UserProfile>) => client.updateProfile(changes),
+    // `Me` lives in the auth context rather than the query cache, so it is the thing to
+    // refresh — there is no second copy to invalidate.
+    onSuccess: () => refreshUser(),
+  });
+}
+
+export function useUpdateSettings() {
+  const { client, refreshUser } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (changes: Partial<UserSettings> & { expected_version?: number }) =>
+      client.updateSettings(changes),
+    onSuccess: async () => {
+      await refreshUser();
+      // Scheduled days and goals are inputs to both, so cached figures computed under the
+      // old settings are now wrong rather than merely stale.
+      void queryClient.invalidateQueries({ queryKey: ['statistics'] });
+      void queryClient.invalidateQueries({ queryKey: ['league'] });
+    },
+  });
+}
+
+export function useBlockedUsers(): UseQueryResult<PublicUser[]> {
+  const { client, status } = useAuth();
+  return useQuery({
+    queryKey: queryKeys.blockedUsers,
+    queryFn: () => client.listBlockedUsers(),
+    enabled: status === 'authenticated',
+    ...OFFLINE_TOLERANT,
+  });
+}
+
+export function useUnblockUser() {
+  const { client } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => client.unblockUser(userId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.blockedUsers });
+      // Unblocking makes the other person visible again across every social read.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.friends });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.friendsPresence });
+    },
   });
 }

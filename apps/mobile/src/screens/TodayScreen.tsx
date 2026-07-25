@@ -214,6 +214,28 @@ export function TodayScreen(): React.ReactElement {
         </Text>
       </Card>
 
+      {/* Manage: the only route to Settings, and to Subjects, which nothing else linked to. */}
+      <Card testID="today-manage">
+        <Text variant="heading">Manage</Text>
+        <View style={styles.linkRow}>
+          <Button
+            testID="today-open-subjects"
+            label="Subjects"
+            variant="secondary"
+            onPress={() => router.push('/subjects')}
+            style={styles.flex}
+          />
+          <Button
+            testID="today-open-settings"
+            label="Settings"
+            variant="secondary"
+            onPress={() => router.push('/settings')}
+            accessibilityHint="Goals, study days, privacy, and account"
+            style={styles.flex}
+          />
+        </View>
+      </Card>
+
       {sync.messages.length > 0 ? (
         <Card testID="today-sync-messages">
           <Text variant="label">About your recent sessions</Text>
@@ -235,6 +257,7 @@ const styles = StyleSheet.create({
   statRow: { flexDirection: 'row', gap: spacing.md },
   statCard: { flex: 1 },
   subjectRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  linkRow: { flexDirection: 'row', gap: spacing.md },
   swatch: { width: 12, height: 12, borderRadius: 6 },
   flex: { flex: 1 },
 });

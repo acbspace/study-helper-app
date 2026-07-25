@@ -69,6 +69,7 @@ function RootNavigator(): React.ReactElement {
       <Stack.Screen name="subjects" options={{ title: 'Subjects', presentation: 'modal' }} />
       <Stack.Screen name="goals" options={{ title: 'Goals' }} />
       <Stack.Screen name="community" options={{ title: 'Community' }} />
+      <Stack.Screen name="settings" options={{ title: 'Settings' }} />
     </Stack>
   );
 }

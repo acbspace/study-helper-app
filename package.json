@@ -12,6 +12,7 @@
     "web": "npm run --workspace apps/web dev",
     "test:mobile": "npm run --workspace apps/mobile test",
     "test:web": "npm run --workspace apps/web test",
+    "test:packages": "npm run --workspace packages/api-client test",
     "typecheck:mobile": "npm run --workspace apps/mobile typecheck",
     "typecheck:web": "npm run --workspace apps/web typecheck",
     "lint": "eslint .",

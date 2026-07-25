@@ -3,6 +3,8 @@
  * idempotency headers. Uses a fake fetch so no server is required.
  */
 
+import { describe, expect, it, type Mock, vi } from 'vitest';
+
 import { ApiClient, type TokenStore } from '../client';
 import { ApiError } from '../errors';
 
@@ -39,16 +41,23 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 /** Headers sent on the nth fetch call, with a present-check so types stay strict. */
-function headersOfCall(fetchImpl: jest.Mock, index: number): Record<string, string> {
+function headersOfCall(fetchImpl: Mock, index: number): Record<string, string> {
   const call = fetchImpl.mock.calls[index];
   if (!call) throw new Error(`Expected a fetch call at index ${index}`);
   return ((call[1] as RequestInit).headers ?? {}) as Record<string, string>;
 }
 
+/** URL and init of the nth fetch call, for assertions about routing and request bodies. */
+function requestOfCall(fetchImpl: Mock, index: number): { url: string; init: RequestInit } {
+  const call = fetchImpl.mock.calls[index];
+  if (!call) throw new Error(`Expected a fetch call at index ${index}`);
+  return { url: call[0] as string, init: call[1] as RequestInit };
+}
+
 describe('ApiClient', () => {
   it('attaches the bearer token to authenticated requests', async () => {
     const tokens = memoryTokenStore({ access: 'access-1', refresh: 'refresh-1' });
-    const fetchImpl = jest.fn(async () => jsonResponse(200, { id: 'u1' }));
+    const fetchImpl = vi.fn(async () => jsonResponse(200, { id: 'u1' }));
     const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
 
     await client.getMe();
@@ -58,7 +67,7 @@ describe('ApiClient', () => {
 
   it('refreshes once on 401 and retries the original request', async () => {
     const tokens = memoryTokenStore({ access: 'expired', refresh: 'refresh-1' });
-    const fetchImpl = jest
+    const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse(401, { error: { code: 'token_expired', message: 'x' } }))
       .mockResolvedValueOnce(
@@ -77,8 +86,8 @@ describe('ApiClient', () => {
 
   it('gives up and signals auth failure when refresh fails', async () => {
     const tokens = memoryTokenStore({ access: 'expired', refresh: 'bad' });
-    const onAuthFailure = jest.fn();
-    const fetchImpl = jest
+    const onAuthFailure = vi.fn();
+    const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse(401, { error: { code: 'token_expired', message: 'x' } }))
       .mockResolvedValueOnce(
@@ -99,7 +108,7 @@ describe('ApiClient', () => {
 
   it('maps error envelopes to ApiError with the stable code', async () => {
     const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
-    const fetchImpl = jest.fn(async () =>
+    const fetchImpl = vi.fn(async () =>
       jsonResponse(409, { error: { code: 'active_session_exists', message: 'Already running.' } }),
     );
     const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
@@ -112,7 +121,7 @@ describe('ApiClient', () => {
 
   it('turns a fetch rejection into a retryable network error', async () => {
     const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
-    const fetchImpl = jest.fn(async () => {
+    const fetchImpl = vi.fn(async () => {
       throw new TypeError('Network request failed');
     });
     const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
@@ -129,11 +138,33 @@ describe('ApiClient', () => {
 
   it('sends an idempotency key with session sync', async () => {
     const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
-    const fetchImpl = jest.fn(async () => jsonResponse(200, { results: [] }));
+    const fetchImpl = vi.fn(async () => jsonResponse(200, { results: [] }));
     const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
 
     await client.syncSessions([], 'key-123');
 
     expect(headersOfCall(fetchImpl, 0)).toMatchObject({ 'Idempotency-Key': 'key-123' });
+  });
+
+  it('patches the profile and the settings on their own endpoints', async () => {
+    const tokens = memoryTokenStore({ access: 'a', refresh: 'r' });
+    const fetchImpl = vi.fn(async () => jsonResponse(200, { id: 'u1' }));
+    const client = new ApiClient({ baseUrl: 'http://api/api/v1', tokens, fetchImpl });
+
+    await client.updateProfile({ display_name: 'Sam' });
+    await client.updateSettings({ scheduled_study_days: 0b0111111, expected_version: 3 });
+
+    const profile = requestOfCall(fetchImpl, 0);
+    expect(profile.url).toBe('http://api/api/v1/me');
+    expect(profile.init.method).toBe('PATCH');
+
+    const settings = requestOfCall(fetchImpl, 1);
+    expect(settings.url).toBe('http://api/api/v1/me/settings');
+    // The version has to survive onto the wire: without it the server cannot detect a
+    // concurrent edit and the write silently becomes last-write-wins.
+    expect(JSON.parse(String(settings.init.body))).toEqual({
+      scheduled_study_days: 0b0111111,
+      expected_version: 3,
+    });
   });
 });

@@ -13,7 +13,12 @@
 - Worker (ARQ): stale-session auto-close reaper.
 - Mobile (Expo): auth, onboarding basics, subjects, resilient offline-first timer with
   SQLite persistence + restoration, sync outbox, Today dashboard, Insights (day/week),
-  tasks, settings. Jest tests for timer machine, offline queue, screens.
+  tasks. Jest tests for timer machine, offline queue, screens.
+- **Settings arrived late.** The `user_settings` columns shipped in M1 and drove real
+  behaviour from the start — scheduled study days feed the league's consistency score, the
+  privacy flags gate presence — but no client could write them, so every account ran on its
+  registration defaults. The Settings screen (`apps/mobile/src/screens/SettingsScreen.tsx`)
+  closes that gap.
 
 ## M2 — Social & presence ✅ in repo
 

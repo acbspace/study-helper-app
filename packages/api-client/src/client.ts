@@ -35,6 +35,7 @@ import type {
   TaskPriority,
   TaskStatus,
   UserPresence,
+  UserProfile,
   UserSearchResult,
   UserSettings,
   WeeklySummary,
@@ -243,6 +244,15 @@ export class ApiClient {
     return this.request<Me>('/me');
   }
 
+  updateProfile(changes: Partial<UserProfile>): Promise<Me> {
+    return this.request<Me>('/me', { method: 'PATCH', body: changes });
+  }
+
+  /**
+   * Patch settings. Passing `expected_version` opts into optimistic concurrency: the server
+   * rejects the write with `version_conflict` if another device changed settings first,
+   * rather than letting the later writer silently win.
+   */
   updateSettings(changes: Partial<UserSettings> & { expected_version?: number }): Promise<Me> {
     return this.request<Me>('/me/settings', { method: 'PATCH', body: changes });
   }

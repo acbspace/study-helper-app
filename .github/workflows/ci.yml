@@ -107,6 +107,10 @@ jobs:
         run: npm run --workspace apps/web typecheck
       - name: Tests (web)
         run: npm run --workspace apps/web test -- --coverage
+      - name: Tests (shared packages)
+        # The api-client's transport suite existed but no runner picked it up, so refresh,
+        # error mapping, and idempotency-key behaviour went unverified on every push.
+        run: npm run test:packages
       - name: Build (web)
         run: npm run --workspace apps/web build
       - name: Generated API types are current

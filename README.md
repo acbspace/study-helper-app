@@ -59,6 +59,11 @@ explainable ([ADR-0006](docs/decisions/ADR-0006-league-scoring-versioned.md)).
 
 ### Platform
 
+- **Settings** — one screen that owns everything the account runs on: profile, daily/weekly
+  goals, **scheduled study days** (the days the league's consistency score is measured
+  against), pomodoro lengths, time zone, the presence and subject privacy switches, blocked
+  users, a data export, and sign-out. Writes carry `expected_version`, so two devices editing
+  at once produce an explicit conflict instead of a silent last-write-wins.
 - **Web dashboard** — a Vite + React read-only dashboard (`apps/web`) reusing the same typed
   `api-client`, `shared-types`, and `design-tokens`, so it stays in lock-step with the API and
   matches the mobile look: verified time, streak, the week's shape, league standing, and which
@@ -273,8 +278,9 @@ npm run format          # prettier --write
 ```bash
 # from the repo root
 npm run --workspace apps/mobile typecheck    # tsc --noEmit
-npm run --workspace apps/mobile test         # 74 tests (jest-expo)
+npm run --workspace apps/mobile test         # 87 tests (jest-expo)
 npm run coverage:mobile                      # …with a coverage report
+npm run test:packages                        # 7 tests (api-client transport, vitest)
 ```
 
 ### Web dashboard
@@ -332,7 +338,8 @@ Latest local run, all green:
 | `eslint .` (all JS workspaces) | clean |
 | `prettier --check .` | clean |
 | `tsc --noEmit` (mobile + packages) | clean |
-| `jest` (mobile) | **74 passed**, 54% line coverage |
+| `jest` (mobile) | **87 passed**, 54% line coverage |
+| `vitest` (api-client transport) | **7 passed** |
 | `tsc --noEmit` (web) | clean |
 | `vitest` (web) | **17 passed** |
 | `vite build` (web) | bundles clean |
