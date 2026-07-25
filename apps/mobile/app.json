@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Study League",
+    "slug": "study-league",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "studyleague",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#4F6BED"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.studyleague.mobile",
+      "infoPlist": {
+        "UIBackgroundModes": ["processing"]
+      }
+    },
+    "android": {
+      "package": "app.studyleague.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#4F6BED"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": ["expo-router", "expo-secure-store", "expo-sqlite"],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiBaseUrl": "http://localhost:8000/api/v1"
+    }
+  }
+}

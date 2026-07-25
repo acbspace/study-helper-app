@@ -1,0 +1,22 @@
+{
+  "name": "study-league",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/mobile",
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run --workspace apps/mobile start",
+    "web": "npm run --workspace apps/web dev",
+    "test:mobile": "npm run --workspace apps/mobile test",
+    "test:web": "npm run --workspace apps/web test",
+    "typecheck:mobile": "npm run --workspace apps/mobile typecheck",
+    "typecheck:web": "npm run --workspace apps/web typecheck",
+    "generate:api": "openapi-typescript http://localhost:8000/api/v1/openapi.json -o packages/shared-types/src/generated/api.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.0"
+  }
+}

@@ -1,0 +1,114 @@
+"""SQLAlchemy models.
+
+Importing this package registers every table on `Base.metadata`, which Alembic
+autogenerate and the test fixtures both depend on.
+"""
+
+from app.db.base import Base
+from app.models.community import (
+    CommunityBookmark,
+    CommunityComment,
+    CommunityPost,
+    CommunityReaction,
+)
+from app.models.enums import (
+    ActorType,
+    AuthProvider,
+    EnrollmentPlacement,
+    FocusMode,
+    FriendshipStatus,
+    GroupRole,
+    GroupVisibility,
+    IntegrityStatus,
+    InvitationStatus,
+    MissionMetric,
+    NotificationKind,
+    ReportStatus,
+    ReportSubjectType,
+    SeasonOutcome,
+    SeasonStatus,
+    SessionEventType,
+    SessionSource,
+    SessionStatus,
+    TaskPriority,
+    TaskStatus,
+)
+from app.models.league import (
+    LeagueCategory,
+    LeagueCohort,
+    LeagueDivision,
+    LeagueEnrollment,
+    LeagueMission,
+    LeagueScore,
+    LeagueScoreBreakdown,
+    LeagueSeason,
+    UserMissionProgress,
+)
+from app.models.planner import DailyPlan, Task
+from app.models.platform import AuditLog, IdempotencyRecord, Notification, Report
+from app.models.social import (
+    Encouragement,
+    Friendship,
+    GroupInvitation,
+    GroupMembership,
+    StudyGroup,
+)
+from app.models.study import StudyGoal, StudySession, StudySessionEvent, Subject
+from app.models.user import Device, RefreshToken, User, UserProfile, UserSettings
+
+__all__ = [
+    "ActorType",
+    "AuditLog",
+    "AuthProvider",
+    "Base",
+    "CommunityBookmark",
+    "CommunityComment",
+    "CommunityPost",
+    "CommunityReaction",
+    "DailyPlan",
+    "Device",
+    "Encouragement",
+    "EnrollmentPlacement",
+    "FocusMode",
+    "Friendship",
+    "FriendshipStatus",
+    "GroupInvitation",
+    "GroupMembership",
+    "GroupRole",
+    "GroupVisibility",
+    "IdempotencyRecord",
+    "IntegrityStatus",
+    "InvitationStatus",
+    "LeagueCategory",
+    "LeagueCohort",
+    "LeagueDivision",
+    "LeagueEnrollment",
+    "LeagueMission",
+    "LeagueScore",
+    "LeagueScoreBreakdown",
+    "LeagueSeason",
+    "MissionMetric",
+    "Notification",
+    "NotificationKind",
+    "RefreshToken",
+    "Report",
+    "ReportStatus",
+    "ReportSubjectType",
+    "SeasonOutcome",
+    "SeasonStatus",
+    "SessionEventType",
+    "SessionSource",
+    "SessionStatus",
+    "StudyGoal",
+    "StudyGroup",
+    "StudySession",
+    "StudySessionEvent",
+    "Subject",
+    "Task",
+    "TaskPriority",
+    "TaskStatus",
+    "User",
+    "UserMissionProgress",
+    "UserProfile",
+    "UserSettings",
+]

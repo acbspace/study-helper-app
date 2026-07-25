@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "study-league-worker"
+version = "0.1.0"
+description = "Study League background jobs"
+requires-python = ">=3.12"
+dependencies = [
+    "arq>=0.26",
+    "study-league-api",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "ruff>=0.6.9", "mypy>=1.11"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["worker"]
+
+[tool.hatch.metadata]
+# `study-league-api` is a sibling path dependency, installed with `pip install -e`.
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["arq.*"]
+ignore_missing_imports = true

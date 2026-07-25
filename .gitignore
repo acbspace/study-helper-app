@@ -1,0 +1,36 @@
+# Node
+node_modules/
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+*.egg-info/
+
+# Env / secrets — never commit real values
+.env
+.env.*
+!.env.example
+
+# Local databases & artifacts
+*.sqlite3
+*.db
+test-artifacts/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
