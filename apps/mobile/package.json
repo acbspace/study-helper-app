@@ -13,7 +13,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.9.0",
+    "@hookform/resolvers": "^5.4.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@study-league/api-client": "0.1.0",
     "@study-league/design-tokens": "0.1.0",
