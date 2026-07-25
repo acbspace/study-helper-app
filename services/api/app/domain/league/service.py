@@ -48,6 +48,15 @@ from app.models.user import User
 DEFAULT_CATEGORY_SLUG = "general_productivity"
 
 
+def build_cohort_label(*, division_name: str, category_name: str, group_index: int) -> str:
+    """Human-readable name for a cohort, e.g. "Gold · Entrance Exams · Group B".
+
+    One definition shared by placement and by the seed: when the two drifted, the format was
+    silently wider than the column that stores it (migration 0006).
+    """
+    return f"{division_name} · {category_name} · Group {chr(ord('A') + group_index)}"
+
+
 @dataclass(frozen=True, slots=True)
 class WeekPoints:
     week_index: int
@@ -237,7 +246,11 @@ class LeagueService:
         cohort = LeagueCohort(
             division_id=division.id,
             category_id=category.id,
-            label=f"{division.name} · {category.name} · Group {chr(ord('A') + len(cohorts))}",
+            label=build_cohort_label(
+                division_name=division.name,
+                category_name=category.name,
+                group_index=len(cohorts),
+            ),
             capacity=25,
         )
         self._db.add(cohort)

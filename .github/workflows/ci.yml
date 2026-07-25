@@ -117,10 +117,11 @@ jobs:
           git diff --exit-code -- packages/shared-types/src/generated
 
   audit:
-    # Advisory only: a newly published advisory should surface on the next run without
-    # turning an unrelated pull request red. Tighten to blocking once the backlog is clear.
+    # Advisory only. Findings are written to the run summary instead of failing the job:
+    # a job-level `continue-on-error` still renders as a red check, which trains everyone
+    # to ignore a permanently-failing job — and then to ignore the real ones next to it.
+    # Make this blocking once the Expo SDK backlog below is cleared.
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -137,8 +138,20 @@ jobs:
         run: |
           pip install pip-audit
           pip install -e "services/api[dev]"
-          pip-audit --desc
+          {
+            echo '## pip-audit'
+            echo '```'
+            pip-audit --desc || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Audit JavaScript dependencies
+        # Known backlog: the Expo SDK 54 build tooling carries ~59 advisories that only an
+        # SDK upgrade clears. They are reported here rather than silently suppressed.
         run: |
           npm ci
-          npm audit --audit-level=high
+          {
+            echo '## npm audit (high and above)'
+            echo '```'
+            npm audit --audit-level=high || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -20,6 +20,7 @@ from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.security import hash_password
 from app.db.session import create_engine, create_session_factory
+from app.domain.league.service import build_cohort_label
 from app.domain.scoring import SCORING_CONFIG_V1
 from app.models.enums import (
     AuthProvider,
@@ -181,7 +182,9 @@ async def _seed_season(db: AsyncSession) -> LeagueSeason:
                 LeagueCohort(
                     division_id=division.id,
                     category_id=category.id,
-                    label=f"{name} · {category.name} · Group A",
+                    label=build_cohort_label(
+                        division_name=name, category_name=category.name, group_index=0
+                    ),
                     capacity=25,
                 )
             )

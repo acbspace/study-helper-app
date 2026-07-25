@@ -28,6 +28,13 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.db.types import JsonDocument, UtcDateTime, UuidType
 from app.models.enums import EnrollmentPlacement, SeasonStatus
 
+DIVISION_NAME_MAX_LENGTH = 40
+CATEGORY_NAME_MAX_LENGTH = 80
+# Cohort labels are composed from a division name and a category name, so the column must be
+# wider than both put together. Exported so the composition can be tested against the column
+# rather than against a number someone has to remember to update.
+COHORT_LABEL_MAX_LENGTH = 160
+
 
 class LeagueCategory(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     """A competition pool (software engineering, language learning, …)."""
@@ -35,7 +42,7 @@ class LeagueCategory(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "league_categories"
 
     slug: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
-    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    name: Mapped[str] = mapped_column(String(CATEGORY_NAME_MAX_LENGTH), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -83,7 +90,7 @@ class LeagueDivision(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UuidType, ForeignKey("league_seasons.id", ondelete="CASCADE"), nullable=False
     )
     tier: Mapped[int] = mapped_column(Integer, nullable=False)
-    name: Mapped[str] = mapped_column(String(40), nullable=False)
+    name: Mapped[str] = mapped_column(String(DIVISION_NAME_MAX_LENGTH), nullable=False)
 
     season: Mapped[LeagueSeason] = relationship(back_populates="divisions")
     cohorts: Mapped[list[LeagueCohort]] = relationship(
@@ -107,7 +114,10 @@ class LeagueCohort(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     category_id: Mapped[uuid.UUID] = mapped_column(
         UuidType, ForeignKey("league_categories.id", ondelete="RESTRICT"), nullable=False
     )
-    label: Mapped[str] = mapped_column(String(40), nullable=False)
+    # Derived as "{division.name} · {category.name} · Group {letter}", so the width has to
+    # cover its inputs: 40 (division) + 80 (category) + 13 of separators and suffix = 133.
+    # It was 40, which silently truncated nothing on SQLite and raised on PostgreSQL.
+    label: Mapped[str] = mapped_column(String(COHORT_LABEL_MAX_LENGTH), nullable=False)
     capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=25)
 
     division: Mapped[LeagueDivision] = relationship(back_populates="cohorts")

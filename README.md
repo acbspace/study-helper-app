@@ -229,7 +229,7 @@ Sign in with the seeded `demo@example.com` / `studyleague123`.
 
 ```bash
 cd services/api
-.venv\Scripts\pytest -q                 # 337 tests
+.venv\Scripts\pytest -q                 # 341 tests
 .venv\Scripts\pytest -q --cov=app       # …with a coverage report
 .venv\Scripts\ruff check .              # lint
 .venv\Scripts\ruff format --check .     # formatting
@@ -323,7 +323,8 @@ Latest local run, all green:
 
 | Check | Result |
 |---|---|
-| `pytest` (API, SQLite) | **337 passed**, 79% line coverage |
+| `pytest` (API, SQLite) | **341 passed**, 79% line coverage |
+| `pytest` (API, PostgreSQL 16) | **341 passed** |
 | `pytest` (worker) | **16 passed** |
 | `ruff check` / `ruff format --check` (API + worker) | clean |
 | `mypy app` / `mypy worker` (strict) | clean, 99 + 6 files |
