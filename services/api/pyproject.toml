@@ -33,7 +33,7 @@ dev = [
     # Linters and type checkers are pinned exactly: a new rule or a formatter change in a
     # patch release turns an unrelated push red. Upgrades are a deliberate commit that also
     # carries whatever fixes the new version demands.
-    "ruff==0.16.0",
+    "ruff==0.16.1",
     "mypy==2.3.0",
 ]
 
