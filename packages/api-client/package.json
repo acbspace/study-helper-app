@@ -11,6 +11,6 @@
     "@study-league/shared-types": "0.1.0"
   },
   "devDependencies": {
-    "vitest": "^2.1.2"
+    "vitest": "^4.1.10"
   }
 }
