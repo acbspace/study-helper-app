@@ -52,7 +52,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://study:study_ci_pw@localhost:5432/study_league_test
         run: alembic upgrade head
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-api
           path: services/api/coverage.xml
